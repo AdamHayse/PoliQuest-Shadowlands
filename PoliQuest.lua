@@ -58,11 +58,7 @@ LockPoliQuestButton = function()
     print("Button will show when you have a Shadowlands quest item in your bags.")
     print("|cFF5c8cc1/pq toggle:|r to show/move button again.")
 end
-local initialCompletedQuestIDs
-local questsCompletedSinceInitialization
-local populateCompletedQuests
-local collectingQuests
-local questIDsExported = false
+
 SlashCmdList["PoliQuest"] = function(msg)
     local cmd, arg = string.split(" ", msg)
     if cmd == "" then
