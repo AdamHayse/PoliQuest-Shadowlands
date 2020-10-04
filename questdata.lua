@@ -611,9 +611,9 @@ addonTable.dialogWhitelist = {
     },
     ["Side Effects"] = {
         ["npc"] = "Scrapper Minoire",
-        ["dialog"] = "Here's the enhancers you wanted."
+        ["dialog"] = "Here are the enhancers you wanted."
     },
-    ["How To Get A Head"] = {
+    ["How to Get a Head"] = {
         ["npc"] = "Marcel Mullby",
         ["dialog"] = "I have some bloodtusk skulls for you."
     },

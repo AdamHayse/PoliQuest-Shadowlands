@@ -480,8 +480,6 @@ do -- Manage quests and dialog
                 if questNames[string.lower(QuestInfoTitleHeader:GetText())] then
                     AcceptQuest()
                 end
-            else
-                QuestFrame:Hide()
             end
         end
     end
