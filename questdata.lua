@@ -14,7 +14,7 @@ addonTable.innWhitelist = {
     
     -- Ardenweald
     ["Flitterbit"] = true,
-    ["Flwngyrr"] = true,
+    --["Flwngyrr"] = true, -- Exclude due to quest
     ["Kewarin"] = true,
     ["Llar'reth"] = true,
     ["Nolon"] = true,
