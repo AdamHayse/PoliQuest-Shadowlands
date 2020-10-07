@@ -237,7 +237,6 @@ do -- Manage usable quest items
             end
             throttleItemCheck = GetTime()
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-            debugPrint(select(3,...))
             if currentItemIndex and questItems[currentItems[currentItemIndex]] and questItems[currentItems[currentItemIndex]]["spellID"] == select(3, ...)
             and questItems[currentItems[currentItemIndex]]["cooldown"] then
                 self.Cooldown:SetCooldown(GetTime(), questItems[currentItems[currentItemIndex]]["cooldown"])
@@ -391,27 +390,33 @@ do -- Manage quests and dialog
     end
     
     local onGossipShow_questGossip = function()
-        local actQuests = C_GossipInfo.GetActiveQuests()
+        local actQuests = C_GossipInfo.GetActiveQuests() or {}
+        debugPrint("numActiveQuests: "..#actQuests)
         for i, v in ipairs(actQuests) do
             if questIDToName[v.questID] and v.isComplete then
+                debugPrint("Selecting index "..i)
                 C_GossipInfo.SelectActiveQuest(i)
                 return
             end
         end
     
-        local availableQuests = C_GossipInfo.GetAvailableQuests()
+        local availableQuests = C_GossipInfo.GetAvailableQuests() or {}
+        debugPrint("numAvailableQuests: "..#availableQuests)
         for i, v in ipairs(availableQuests) do
             if questIDToName[v.questID] then
+                debugPrint("Selecting index "..i)
                 C_GossipInfo.SelectAvailableQuest(i)
                 return
             end
         end
     
-        local numQuests = C_QuestLog.GetNumQuestLogEntries()
+        local numQuests = C_QuestLog.GetNumQuestLogEntries() or 0
+        debugPrint("numQuests: "..numQuests)
         for i=1, numQuests do
             local questName = C_QuestLog.GetInfo(i).title
             local questDialog = dialogWhitelist[questName]
             if questDialog then
+                debugPrint("Selecting quest dialog")
                 if type(questDialog["npc"]) == "string" then
                     if questDialog["npc"] == GossipFrameNpcNameText:GetText() then
                         searchDialogOptions(questDialog)
@@ -444,10 +449,16 @@ do -- Manage quests and dialog
     
     -- completes a quest
     local completeQuest = function()
+        debugPrint("numActiveQuests: "..GetNumActiveQuests())
         for i=1, GetNumActiveQuests() do
             local questName, isComplete = GetActiveTitle(i)
+            debugPrint("questName: "..questName)
+            if isComplete then
+                debugPrint("isComplete: true")
+            else
+                debugPrint("isComplete: false")
+            end
             if questNames[string.lower(questName)] and isComplete then
-                debugPrint("onQuestGreeting | completeQuest | SelectActiveQuest: " .. questName)
                 SelectActiveQuest(i)
                 return
             end
@@ -456,8 +467,10 @@ do -- Manage quests and dialog
     
     -- adds a quest
     local acceptQuest = function()
+        debugPrint("numAvailableQuests: "..GetNumAvailableQuests())
         for i=1, GetNumAvailableQuests() do
             local questID = select(5, GetAvailableQuestInfo(i))
+            debugPrint(i.." "..questID)
             if questIDToName[questID] then
                 SelectAvailableQuest(i)
                 return
@@ -475,20 +488,49 @@ do -- Manage quests and dialog
 
     -- adds a quest
     local onQuestDetail = function()
+        if QuestInfoTitleHeader ~= nil then
+            debugPrint("QuestInfoTitleHeader shown: true")
+        else
+            debugPrint("QuestInfoTitleHeader shown: false")
+        end
         if QuestInfoTitleHeader then
+            if QuestInfoTitleHeader:GetText() ~= nil then
+                debugPrint("QuestInfoTitleHeader: "..QuestInfoTitleHeader:GetText())
+            else
+                debugPrint("QuestInfoTitleHeader: nil")
+            end
             if QuestInfoTitleHeader:GetText() and QuestInfoTitleHeader:GetText() ~= "" then
                 if questNames[string.lower(QuestInfoTitleHeader:GetText())] then
                     AcceptQuest()
                 end
+            else
+                debugPrint("Quest detail visible without title header text. Attempting close.")
+                QuestFrame:Hide()
             end
         end
     end
 
     -- completes a quest
     local onQuestProgress = function()
+        if QuestProgressTitleText ~= nil then
+            debugPrint("QuestProgressTitleText shown: true")
+        else
+            debugPrint("QuestProgressTitleText shown: false")
+        end
         if QuestProgressTitleText then
-            if questNames[string.lower(QuestProgressTitleText:GetText())] and IsQuestCompletable() then
-                CompleteQuest()
+            debugPrint("QuestProgressTitleText: "..QuestProgressTitleText:GetText())
+            if IsQuestCompletable() then
+                debugPrint("IsQuestCompletable: true")
+            else
+                debugPrint("IsQuestCompletable: false")
+            end
+            if questNames[string.lower(QuestProgressTitleText:GetText())] then
+                if IsQuestCompletable() then
+                    CompleteQuest()
+                else
+                    debugPrint("QuestFrame visible and nothing to do. Attempting close.")
+                    QuestFrame:Hide()
+                end
             end
         end
     end
@@ -681,10 +723,19 @@ do -- Manage quests and dialog
     
     -- completes a quest
     local onQuestComplete = function()
-        if QuestInfoTitleHeader and questNames[string.lower(QuestInfoTitleHeader:GetText())] then
-            local questRewardIndex = getQuestRewardChoice()
-            if questRewardIndex then
-                GetQuestReward(questRewardIndex)
+        if QuestInfoTitleHeader ~= nil then
+            debugPrint("QuestInfoTitleHeader shown: true")
+        else
+            debugPrint("QuestInfoTitleHeader shown: false")
+        end
+        if QuestInfoTitleHeader then
+            debugPrint(QuestInfoTitleHeader:GetText())
+            if questNames[string.lower(QuestInfoTitleHeader:GetText())] then
+                local questRewardIndex = getQuestRewardChoice()
+                debugPrint("questRewardIndex: "..questRewardIndex)
+                if questRewardIndex then
+                    GetQuestReward(questRewardIndex)
+                end
             end
         end
     end
@@ -692,10 +743,12 @@ do -- Manage quests and dialog
     -- adds a quest
     local onQuestLogUpdate_selectPopups = function()
         local num = GetNumAutoQuestPopUps()
+        debugPrint("numAutoQuestPopUps "..num)
         if num > 0 then
             for i=1,num do
                 local questID = GetAutoQuestPopUp(i)
                 if questIDToName[questID] then
+                    debugPrint(i.." "..questIDToName[questID])
                     AutoQuestPopUpTracker_OnMouseDown(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID))
                 end
             end
@@ -752,6 +805,7 @@ do -- Manage quests and dialog
     end
 
     local onEvent = function(self, event, ...)
+        debugPrint(event)
         if event == "GOSSIP_SHOW" then
             onGossipShow_questGossip()
             if PoliQuestOptionFrame5CheckButton:GetChecked() then
@@ -778,6 +832,10 @@ do -- Manage quests and dialog
             end
         elseif event == "QUEST_ACCEPTED" then
             onQuestAccepted(...)
+            if GossipFrame:IsVisible() then
+                onGossipShow_questGossip()
+            end
+            QuestFrame:Hide()
         elseif event == "QUEST_REMOVED" then
             questProgresses[...] = nil
         elseif event == "PLAYER_ENTERING_WORLD" then
@@ -794,7 +852,7 @@ do -- Manage quests and dialog
         end
     end)
     questAndDialogHandler.Events = {
-       "GOSSIP_SHOW",
+      "GOSSIP_SHOW",
        "QUEST_GREETING",
        "QUEST_DETAIL",
        "QUEST_PROGRESS",
