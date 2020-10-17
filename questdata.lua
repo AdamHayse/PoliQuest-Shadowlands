@@ -69,7 +69,7 @@ addonTable.itemEquipLocToEquipSlot = {
 }
 
 addonTable.dialogWhitelist = {
-    ["A Chilling Summons"] = {
+    ["Shadowlands: A Chilling Summons"] = {
         ["npc"] = {
             "Nazgrim",
             "High Inquisitor Whitemane",
@@ -594,8 +594,8 @@ addonTable.dialogWhitelist = {
             "Aspirant Ikaran"
         },
         ["dialog"] = {
-            "Do you have \"Worlds Beyond Counting?\"",
-            "Do you have \"The Infinite Treatises?\""
+            "Do you have \"Worlds Beyond Counting\"?",
+            "Do you have \"The Infinite Treatises\"?"
         }
     },
     ["Read Between the Lines"] = {
@@ -691,6 +691,14 @@ addonTable.dialogWhitelist = {
     ["Into the Light"] = {
         ["npc"] = "Laurent",
         ["dialog"] = "I am ready."
+    },
+    ["We Can Rebuild Him"] = {
+        ["npc"] = "Pelodis",
+        ["dialog"] = "Everything is in place for the repair."
+    },
+    ["Follow the Path"] = {
+        ["npc"] = "Tal-Inara",
+        ["dialog"] = "Maldraxxus has attacked Bastion."
     }
 }
 
@@ -885,8 +893,8 @@ addonTable.questIDToName = {
     [61960] = "champion: xertora",
     [61961] = "champion: rattlebag",
     [57865] = "ages-echoing wisdom",
-    [61962] = "champion: velkein",
     [59914] = "fear to tread",
+    [61962] = "champion: velkein",
     [57866] = "idle hands",
     [59915] = "soul in hand",
     [57867] = "the sweat of our brow",
@@ -1008,8 +1016,8 @@ addonTable.questIDToName = {
     [58075] = "favor: dredger's toolkit",
     [58077] = "favor: perfected hand mirror",
     [58078] = "favor: bottle of redelav wine",
-    [58079] = "favor: pristine dredbat fang",
     [60127] = "missing stone fiend",
+    [58079] = "favor: pristine dredbat fang",
     [58080] = "favor: glittering primrose necklace",
     [60128] = "ready to serve",
     [60129] = "stranger in an even stranger land",
@@ -1068,8 +1076,8 @@ addonTable.questIDToName = {
     [62250] = "a new adventure awaits",
     [58161] = "forest disappearances",
     [58162] = "mysterious masks",
-    [58163] = "a desperate solution",
     [62259] = "anima-laden dreamcatcher",
+    [58163] = "a desperate solution",
     [58164] = "cult of personality",
     [58165] = "cut the roots",
     [62262] = "fungal feeding",
@@ -1376,8 +1384,8 @@ addonTable.questIDToName = {
     [61219] = "champion: nerith darkwing",
     [59171] = "prey upon them",
     [59172] = "war is deception",
-    [61221] = "champion: stonehuck",
     [57125] = "time to reflect",
+    [61221] = "champion: stonehuck",
     [61222] = "champion: kaletar the mender",
     [61223] = "champion: ayeleth the deprived",
     [57131] = "let the hunt begin",
