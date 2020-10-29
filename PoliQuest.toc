@@ -3,6 +3,14 @@
 ## Title: PoliQuest
 ## Notes: Quest automation addon for Shadowlands
 ## SavedVariables: PoliSavedVars
+
 embeds.xml
+ConfigMenu.lua
+
 questdata.lua
+ItemHandler.lua
+DialogHandler.lua
+HearthstoneHandler.lua
+RewardsHandler.lua
+EmotesHandler.lua
 PoliQuest.lua

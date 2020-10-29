@@ -76,6 +76,10 @@ addonTable.dialogWhitelist = {
         },
         ["dialog"] = "Tell me what happened."
     },
+    ["A Flight from Darkness"] = {
+        ["npc"] = "Lady Jaina Proudmoore",
+        ["dialog"] = "I am ready."
+    },
     ["A Moment's Respite"] = {
         ["npc"] = "Lady Jaina Proudmoore",
         ["dialog"] = {
@@ -2470,6 +2474,3 @@ addonTable.questItems = {
         ["cooldown"] = 30
     },
 }
-
-
-
