@@ -300,20 +300,17 @@ local onUpdate = function()
 end
 
 local initialize = function()
-    print("initializing button")
     throttleItemCheck = nil
-    pendingUpdate = nil
-    currentItems = {}
-    currentItemIndex = nil
     updateCurrentItems()
-    updateButton(true)
+    pendingUpdate = true
 end
 
 local terminate = function()
     throttleItemCheck = nil
-    pendingUpdate = nil
+    pendingUpdate = false
     currentItems = nil
     currentItemIndex = nil
+    pqButton:SetAttribute("item", nil) 
     pqButton:Hide()
 end
 

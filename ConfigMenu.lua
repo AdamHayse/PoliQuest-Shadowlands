@@ -38,9 +38,7 @@ local configLayout = function(parent, children)
         local childFrame = child.frame
         if not child:GetUserData("child") then
             childFrame:ClearAllPoints()
-            --print("parent width before: " .. parent:GetWidth())
             childFrame:SetWidth(.5 * 544)
-            --print("parent width after: " .. parent:GetWidth())
             if leftColumnCount <= rightColumnCount then
                 childFrame:SetPoint("TOPRIGHT", parent, "TOP", 0, -leftColumnCount*40)
                 leftColumnCount = leftColumnCount + 1
@@ -131,7 +129,11 @@ local drawConfigTab = function(container)
     QuestEmoteAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestEmoteAutomation", key) end)
     container:AddChild(QuestEmoteAutomationCheckButton)
     
-    updateCheckBoxEnabledStatus(container, false)
+    if InCombatLockdown() then
+        updateCheckBoxEnabledStatus(container, true)
+    else
+        updateCheckBoxEnabledStatus(container, false)
+    end
     
     container:ResumeLayout()
     container:DoLayout()
@@ -325,7 +327,7 @@ local selectGroup = function(container, group)
     end
 end
 
-local configMenu
+local configMenu, configTab
 local createMenu = function()
     configMenu = AceGUI:Create("Frame")
     configMenu:SetTitle("PoliQuest Configuration")
@@ -339,7 +341,7 @@ local createMenu = function()
     configMenu.frame:SetClampedToScreen(true)
     configMenu:PauseLayout()
     
-    local configTab = AceGUI:Create("TabGroup")
+    configTab = AceGUI:Create("TabGroup")
     configTab:SetTabs({{text="Feature Configuration", value="tab1"}, {text="Documentation", value="tab2"}})
     configTab:SetCallback("OnGroupSelected", function(self, event, group) self:ReleaseChildren() selectGroup(self, group) end)
     configMenu:AddChild(configTab)
@@ -364,3 +366,16 @@ end
 
 addonTable.configMenu = configMenu
 addonTable.createMenu = createMenu
+
+local menuLockdownFrame = CreateFrame("Frame")
+menuLockdownFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+menuLockdownFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+menuLockdownFrame:SetScript("OnEvent", function(self, event)
+    if configMenu and configMenu:IsVisible() and configTab.tabs and configTab.tabs[1].selected then
+        if event == "PLAYER_REGEN_ENABLED" then
+            updateCheckBoxEnabledStatus(configTab, false)
+        else
+            updateCheckBoxEnabledStatus(configTab, true)
+        end
+    end
+end)

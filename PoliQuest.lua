@@ -46,7 +46,10 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             PoliSavedVars.QuestEmoteAutomation = {
                 ["enabled"] = true
             }
+        else
+            addonTable.QuestItemButton.Button:lock()
         end
+        
         for _, featureName in ipairs(featureNames) do
             addonTable.updateFeatureConfiguration(featureName, PoliSavedVars[featureName].enabled)
             local switches = PoliSavedVars[featureName].switches
@@ -65,91 +68,66 @@ local PoliQuest_OnPlayerLogout = function()
     PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset = select(3, addonTable.QuestItemButton.Button:GetPoint(1))
 end
 
-local QuestItemButton_OnPlayerRegenEnabled = addonTable.QuestItemButton_OnPlayerRegenEnabled
-local QuestItemButton_OnPlayerRegenDisabled = addonTable.QuestItemButton_OnPlayerRegenDisabled
-local QuestItemButton_OnBagUpdate = addonTable.QuestItemButton_OnBagUpdate
-local QuestItemButton_OnBagUpdateCooldown = addonTable.QuestItemButton_OnBagUpdateCooldown
-local QuestItemButton_OnUnitSpellcastSucceeded = addonTable.QuestItemButton_OnUnitSpellcastSucceeded
-
-local QuestAndDialogAutomation_OnGossipShow = addonTable.QuestAndDialogAutomation_OnGossipShow
-local QuestAndDialogAutomation_OnQuestGreeting = addonTable.QuestAndDialogAutomation_OnQuestGreeting
-local QuestAndDialogAutomation_OnQuestDetail = addonTable.QuestAndDialogAutomation_OnQuestDetail
-local QuestAndDialogAutomation_OnQuestProgress = addonTable.QuestAndDialogAutomation_OnQuestProgress
-local QuestAndDialogAutomation_OnQuestComplete = addonTable.QuestAndDialogAutomation_OnQuestComplete
-local QuestAndDialogAutomation_OnQuestLogUpdate = addonTable.QuestAndDialogAutomation_OnQuestLogUpdate
-local QuestAndDialogAutomation_OnQuestAccepted = addonTable.QuestAndDialogAutomation_OnQuestAccepted
-local QuestAndDialogAutomation_OnQuestRemoved = addonTable.QuestAndDialogAutomation_OnQuestRemoved
-
-local HearthstoneAutomation_OnGossipShow = addonTable.HearthstoneAutomation_OnGossipShow
-local HearthstoneAutomation_OnConfirmBinder = addonTable.HearthstoneAutomation_OnConfirmBinder
-local HearthstoneAutomation_OnGossipClosed = addonTable.HearthstoneAutomation_OnGossipClosed
-
-local QuestRewardEquipAutomation_OnQuestLootReceived = addonTable.QuestRewardEquipAutomation_OnQuestLootReceived
-local QuestRewardEquipAutomation_OnPlayerEquipmentChanged = addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged
-
-local QuestEmoteAutomation_OnPlayerTargetChanged = addonTable.QuestEmoteAutomation_OnPlayerTargetChanged
-local QuestEmoteAutomation_OnChatMsgMonsterSay = addonTable.QuestEmoteAutomation_OnChatMsgMonsterSay
-
 
 -- All events handled by feature handlers, and the orders in which they should execute with respect to each other
 local constantEventHandlers = {
     ["PLAYER_REGEN_ENABLED"] = {
-        QuestItemButton_OnPlayerRegenEnabled
+        addonTable.QuestItemButton_OnPlayerRegenEnabled
     },
     ["PLAYER_REGEN_DISABLED"] = {
-        QuestItemButton_OnPlayerRegenDisabled
+        addonTable.QuestItemButton_OnPlayerRegenDisabled
     },
     ["BAG_UPDATE"] = {
-        QuestItemButton_OnBagUpdate
+        addonTable.QuestItemButton_OnBagUpdate
     },
     ["BAG_UPDATE_COOLDOWN"] = {
-        QuestItemButton_OnBagUpdateCooldown
+        addonTable.QuestItemButton_OnBagUpdateCooldown
     },
     ["UNIT_SPELLCAST_SUCCEEDED"] = {
-        QuestItemButton_OnUnitSpellcastSucceeded
+        addonTable.QuestItemButton_OnUnitSpellcastSucceeded
     },
     ["GOSSIP_SHOW"] = {
-        QuestAndDialogAutomation_OnGossipShow,
-        HearthstoneAutomation_OnGossipShow
+        addonTable.QuestAndDialogAutomation_OnGossipShow,
+        addonTable.HearthstoneAutomation_OnGossipShow
     },
     ["QUEST_GREETING"] = {
-        QuestAndDialogAutomation_OnQuestGreeting
+        addonTable.QuestAndDialogAutomation_OnQuestGreeting
     },
     ["QUEST_DETAIL"] = {
-        QuestAndDialogAutomation_OnQuestDetail
+        addonTable.QuestAndDialogAutomation_OnQuestDetail
     },
     ["QUEST_PROGRESS"] = {
-        QuestAndDialogAutomation_OnQuestProgress
+        addonTable.QuestAndDialogAutomation_OnQuestProgress
     },
     ["QUEST_COMPLETE"] = {
-        QuestAndDialogAutomation_OnQuestComplete
+        addonTable.QuestAndDialogAutomation_OnQuestComplete
     },
     ["QUEST_LOG_UPDATE"] = {
-        QuestAndDialogAutomation_OnQuestLogUpdate
+        addonTable.QuestAndDialogAutomation_OnQuestLogUpdate
     },
     ["QUEST_ACCEPTED"] = {
-        QuestAndDialogAutomation_OnQuestAccepted
+        addonTable.QuestAndDialogAutomation_OnQuestAccepted
     },
     ["QUEST_REMOVED"] = {
-        QuestAndDialogAutomation_OnQuestRemoved
+        addonTable.QuestAndDialogAutomation_OnQuestRemoved
     },
     ["CONFIRM_BINDER"] = {
-        HearthstoneAutomation_OnConfirmBinder
+        addonTable.HearthstoneAutomation_OnConfirmBinder
     },
     ["GOSSIP_CLOSED"] = {
-        HearthstoneAutomation_OnGossipClosed
+        addonTable.HearthstoneAutomation_OnGossipClosed
     },
     ["QUEST_LOOT_RECEIVED"] = {
-        QuestRewardEquipAutomation_OnQuestLootReceived
+        addonTable.QuestRewardEquipAutomation_OnQuestLootReceived
     },
     ["PLAYER_EQUIPMENT_CHANGED"] = {
-        QuestRewardEquipAutomation_OnPlayerEquipmentChanged
+        addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged
     },
     ["PLAYER_TARGET_CHANGED"] = {
-        QuestEmoteAutomation_OnPlayerTargetChanged
+        addonTable.QuestEmoteAutomation_OnPlayerTargetChanged
     },
     ["CHAT_MSG_MONSTER_SAY"] = {
-        QuestEmoteAutomation_OnChatMsgMonsterSay
+        addonTable.QuestEmoteAutomation_OnChatMsgMonsterSay
     }
 }
 
