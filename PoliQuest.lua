@@ -21,7 +21,7 @@ local featureNames = {
 
 local PoliQuest_OnAddonLoaded = function(addonName)
     if addonName == "PoliQuest" then
-        if PoliSavedVars == nil then
+        if PoliSavedVars == nil or PoliSavedVars.questAutomationEnabled ~= nil then
             PoliSavedVars = {}
             addonTable.QuestItemButton.Button:unlock()
             PoliSavedVars.QuestItemButton = {
@@ -46,6 +46,16 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             PoliSavedVars.QuestEmoteAutomation = {
                 ["enabled"] = true
             }
+            if PoliSavedVars.questAutomationEnabled ~= nil then
+                PoliSavedVars.questAutomationEnabled = nil
+                PoliSavedVars.questLootAutomationEnabled = nil
+                PoliSavedVars.questStrictAutomation = nil
+                PoliSavedVars.questLootEquipAutomationEnabled = nil
+                PoliSavedVars.hearthAutomationEnabled = nil
+                PoliSavedVars.relativePoint = nil
+                PoliSavedVars.xOffset = nil
+                PoliSavedVars.yOffset = nil
+            end
         else
             addonTable.QuestItemButton.Button:lock()
         end
