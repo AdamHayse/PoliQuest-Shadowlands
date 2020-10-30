@@ -38,7 +38,7 @@ local PoliQuest_OnAddonLoaded = function(addonName)
                 }
             }
             PoliSavedVars.HearthstoneAutomation = {
-                ["enabled"] = true
+                ["enabled"] = false
             }
             PoliSavedVars.QuestRewardEquipAutomation = {
                 ["enabled"] = true
