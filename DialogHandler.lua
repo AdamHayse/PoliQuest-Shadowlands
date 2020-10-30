@@ -226,7 +226,7 @@ local getQuestRewardChoice = function()
     end
 end
 
-addonTable.QuestAndDialogAutomation_OnGossipShow = function()
+local onGossipShow = function()
     local actQuests = C_GossipInfo.GetActiveQuests() or {}
     addonTable.debugPrint("numActiveQuests: "..#actQuests)
     for i, v in ipairs(actQuests) do
@@ -269,6 +269,10 @@ addonTable.QuestAndDialogAutomation_OnGossipShow = function()
             end
         end
     end
+end
+
+addonTable.QuestAndDialogAutomation_OnGossipShow = function()
+    onGossipShow()
 end
 
 addonTable.QuestAndDialogAutomation_OnQuestGreeting = function()
@@ -382,7 +386,7 @@ end
 addonTable.QuestAndDialogAutomation_OnQuestAccepted = function(questID)
     C_QuestLog.AddQuestWatch(questID, 1)
     if GossipFrame:IsVisible() then
-        onGossipShow_questGossip()
+        onGossipShow()
     end
     QuestFrame:Hide()
 end
