@@ -22,19 +22,21 @@ Type "**/pq toggle**" or "**/poliquest toggle**" to show/hide the PQButton and r
 
 **Feature Overview**
 
-PQ Button
+<details>
+  <summary>PQ Button</summary>
 
-<div class="spoiler">The PQButton is a button that appears when you have a Shadowlands quest item in your bags. The addon automatically binds quest items to this button and allows you to effortlessly use quest items by giving you the option to keybind it.
+  The PQButton is a button that appears when you have a Shadowlands quest item in your bags. The addon automatically binds quest items to this button and allows you to effortlessly use quest items by giving you the option to keybind it.
 
-The following macro keybinds the PQButton as well as the arrow button that allows you to cycle through the quest items in your bags. Using the macro while not holding ctrl, alt, or shift will use the quest item, and using the macro while holding alt will cycle through the quest items in your bags.  
+  The following macro keybinds the PQButton as well as the arrow button that allows you to cycle through the quest items in your bags. Using the macro while not holding ctrl, alt, or shift will use the quest item, and using the macro while holding alt will cycle through the quest items in your bags.  
 
-`/click [nomod]PQButton;[mod:alt]PQNext`  
+  `/click [nomod]PQButton;[mod:alt]PQNext`  
 
-The PQButton only updates outside of combat. If you gain or lose a quest item while in combat, then the button will update once out of combat. Likewise, the quest item bound to the PQButton can only be changed while out of combat.  
+  The PQButton only updates outside of combat. If you gain or lose a quest item while in combat, then the button will update once out of combat. Likewise, the quest item bound to the PQButton can only be changed while out of combat.  
 
-The PQButton can be repositioned. It currently cannot be resized. I'm going to try implementing that before the code cutoff date that I set before Shadowland's release (Nov. 20, 2020).  
+  The PQButton can be repositioned. It currently cannot be resized. I'm going to try implementing that before the code cutoff date that I set before Shadowland's release (Nov. 20, 2020).  
 
-The PQButton currently only works for level 50-59 Shadowlands quests. I may expand this to include other quests as well, but I haven't looked into it yet. Currently, this button only shows quest items that are in the addon's whitelist. This whitelist was created and is currently maintained by scraping data from wowhead with a separate program that I wrote, and then formatting it so that it is usable by the addon. I'll probably need to take a separate approach to make it work for all quests.</div>
+  The PQButton currently only works for level 50-59 Shadowlands quests. I may expand this to include other quests as well, but I haven't looked into it yet. Currently, this button only shows quest items that are in the addon's whitelist. This whitelist was created and is currently maintained by scraping data from wowhead with a separate program that I wrote, and then formatting it so that it is usable by the addon. I'll probably need to take a separate approach to make it work for all quests.
+</details>
 
 <details>
   <summary>Quest and Dialog Automation</summary>
