@@ -17,6 +17,7 @@ local questIDToName = addonTable.questIDToName
 local dialogWhitelist = addonTable.dialogWhitelist
 local innWhitelist = addonTable.innWhitelist
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
+local bonusToIlvl = addonTable.bonusToIlvl
 
 local searchDialogOptions = function(questDialog)
     local gossipOptions = C_GossipInfo.GetOptions()
@@ -93,21 +94,36 @@ local getItemsDetails = function(numChoices)
     return itemDetails
 end
 
+local bonusIlvlEquivalent = function(itemLink)
+    local itemName = GetItemInfo(itemLink)
+    local bonus = 0
+    if itemName:find("Bit Band") or itemName:find("Logic Loop") then
+        bonus = 20
+    end
+    local itemString = string.match(itemLink, "item[%-?%d:]+")
+    local _, _, gem1, gem2, gem3, gem4 = string.split(":", itemString)
+    if bonusToIlvl[tonumber(gem1)] then bonus = bonus + 7.1 end
+    if bonusToIlvl[tonumber(gem2)] then bonus = bonus + 7.1 end
+    if bonusToIlvl[tonumber(gem3)] then bonus = bonus + 7.1 end
+    if bonusToIlvl[tonumber(gem4)] then bonus = bonus + 7.1 end
+    return bonus
+end
+
 local calcIlvlDifference = function(itemDetails)
     local itemIlvl = itemDetails["ilvl"]
     local equipSlot = itemDetails["equipSlot"]
     if type(equipSlot) == "number" then
-        return itemIlvl - C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot))
+        return itemIlvl - (C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot)) + bonusIlvlEquivalent(GetInventoryItemLink("player", equipSlot)))
     else
-        local ilvl1 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1]))
-        local ilvl2 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2]))
+        local ilvl1 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1])) + bonusIlvlEquivalent(GetInventoryItemLink("player", equipSlot[1]))
+        local ilvl2 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2])) + bonusIlvlEquivalent(GetInventoryItemLink("player", equipSlot[2]))
         return ilvl1 > ilvl2 and itemIlvl - ilvl2 or itemIlvl - ilvl1
     end
 end
 
 local missingItem = function(itemsDetails)
     for k, v in pairs(itemsDetails) do
-        local equipSlot = v["equipSlot"]
+        local equipSlot = v["equipSlot"]  
         if type(equipSlot) == "number" then
             if GetInventoryItemLink("player", equipSlot) == nil then
                 return true
@@ -317,6 +333,8 @@ addonTable.QuestAndDialogAutomation_OnQuestDetail = function()
         if QuestInfoTitleHeader:GetText() and QuestInfoTitleHeader:GetText() ~= "" then
             if questNames[string.lower(QuestInfoTitleHeader:GetText())] then
                 AcceptQuest()
+            elseif string.lower(QuestInfoTitleHeader:GetText()) == "blinded by the light" then
+                print("|cFF5c8cc1PoliQuest:|r |cFFFF0000Quests that require level 60 are not automated in order to prevent automation of important quest-related decisions.|r")
             end
         else
             addonTable.debugPrint("Quest detail visible without title header text. Attempting close.")

@@ -7,6 +7,9 @@ local GetContainerNumSlots, GetContainerItemLink, GetItemSpecInfo = GetContainer
 local InCombatLockdown, EquipItemByName, _G, CreateFrame = InCombatLockdown, EquipItemByName, _G, CreateFrame
 
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
+local levelingItems = addonTable.levelingItems
+local bonusToIlvl = addonTable.bonusToIlvl
+
 
 local scanningTooltip = CreateFrame("GameTooltip", "PoliScanningTooltip", nil, "GameTooltipTemplate")
 scanningTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
@@ -58,28 +61,45 @@ local getBagAndSlot = function(itemName)
     return nil
 end
 
+local bonusIlvlEquivalent = function(itemLink)
+    local itemName = GetItemInfo(itemLink)
+    for _, v in ipairs(levelingItems) do if itemName == v then return 1000 end end
+    local bonus = 0
+    if itemName:find("Bit Band") or itemName:find("Logic Loop") then
+        bonus = 20
+    end
+    local itemString = string.match(itemLink, "item[%-?%d:]+")
+    local _, enchant, gem1, gem2, gem3, gem4 = string.split(":", itemString)
+    bonus = bonus + bonusToIlvl[tonumber(enchant)] + bonusToIlvl[tonumber(gem1)] + bonusToIlvl[tonumber(gem2)] + bonusToIlvl[tonumber(gem3)] + bonusToIlvl[tonumber(gem4)]
+    return bonus
+end
+
 local isUpgrade = function(bagID, slotIndex)
     local mixin = ItemLocation:CreateFromBagAndSlot(bagID, slotIndex)
+    local itemItemLink = C_Item.GetItemLink(mixin)
     local itemIlvl = C_Item.GetCurrentItemLevel(mixin)
-    local itemEquipLoc = select(9, GetItemInfo(C_Item.GetItemLink(mixin)))
+    local itemEquipLoc = select(9, GetItemInfo(itemItemLink))
     local equipSlot = itemEquipLocToEquipSlot[itemEquipLoc]
     if type(equipSlot) == "number" then
-        if GetInventoryItemLink("player", equipSlot) == nil then
+        local equipLink = GetInventoryItemLink("player", equipSlot)
+        if equipLink == nil then
             return true, equipSlot
         else
-            local equipIlvl = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot))
+            local equipIlvl = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot)) + bonusIlvlEquivalent(equipLink)
             if itemIlvl - equipIlvl > 0 then
                 return true, equipSlot
             end
         end
     else
-        if GetInventoryItemLink("player", equipSlot[1]) == nil then
+        local equipLink1 = GetInventoryItemLink("player", equipSlot[1])
+        local equipLink2 = GetInventoryItemLink("player", equipSlot[2])
+        if equipLink1 == nil then
             return true, equipSlot[1]
-        elseif GetInventoryItemLink("player", equipSlot[2]) == nil then
+        elseif equipLink2 == nil then
             return true, equipSlot[2]
         else
-            local equipIlvl1 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1]))
-            local equipIlvl2 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2]))
+            local equipIlvl1 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1])) + bonusIlvlEquivalent(equipLink1)
+            local equipIlvl2 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2])) + bonusIlvlEquivalent(equipLink2)
             if equipIlvl1 > equipIlvl2 then
                 if itemIlvl - equipIlvl2 > 0 then
                     return true, equipSlot[2]
