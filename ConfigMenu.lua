@@ -183,7 +183,7 @@ local drawDocumentationTab = function(container)
     scrollFrame:AddChild(header1)
     
     local text1 = AceGUI:Create("Label")
-    text1:SetText("PoliQuest is a simple Shadowlands questing addon that automates a significant portion of the leveling experience.  It does not automate quests that require level 60.")
+    text1:SetText("PoliQuest is a Shadowlands questing addon that makes leveling less cumbersome by providing tools that reduce mouse button clicks and automating quest interactions.")
     text1:SetWidth(scrollFrame.frame:GetWidth() - 20)
     scrollFrame:AddChild(text1)
     
@@ -197,16 +197,15 @@ local drawDocumentationTab = function(container)
     local text2 = AceGUI:Create("Label")
     text2:SetText([[The following tasks are automated for level 50-59 Shadowlands questing:
     
-    - Keybinding quest items to the PQButton
-    - Accepting quests
-    - Completing quests
-    - Tracking quests
-    - Quest progress percent tracking
-    - Interacting with NPC quest dialog
-    - Performing emotes for quest criteria
-    - Setting hearth at Shadowlands inns (below lvl 60 only)
-    - Choosing quest rewards (quests below lvl 60 only)
-    - Equipping quest loot upgrades (BoP loot only)]])
+    - PQButton that automatically binds Shadowlands quest items to it
+    - Quest emote automation
+    - Automatically accept and complete quests (level 50-59 quests only)
+    - Automatically select correct quest dialog (level 50-59 quests only)
+    - Automatically track quests when accepted (all quests)
+    - Track quest progress percent in quest info display (all quests)
+    - Quest reward automation (level 50-59 quests only)
+    - Automatically equip quest loot upgrades (all quests. non-BOE items only)
+    - Automatically set hearthstone (less than level 60 only)]])
     text2:SetWidth(scrollFrame.frame:GetWidth() - 20)
     scrollFrame:AddChild(text2)
     
@@ -254,9 +253,7 @@ local drawDocumentationTab = function(container)
     local text8 = AceGUI:Create("Label")
     text8:SetText([[The PQButton can only be updated out of combat. For example, if you obtain a quest with a quest item in combat, the addon will wait for combat to end before updating the PQButton.  Also, if you have multiple quest items, you will not be able to swap them on the PQButton unless you are out of combat.
 
-The PQButton can also be clicked with the mouse cursor if desired. You can also mouse over it to get the quest item info. The PQButton should only show when it is unlocked for moving, or you have one or multiple quest items.
-
-There is currently no way of hiding the PQButton if you have a Shadowlands quest item in your bags while this feature is enabled. I might add this feature if enough people want it.]])
+The PQButton can also be clicked with the mouse cursor if desired. You can also mouse over it to get the quest item info. The PQButton should only show when it is unlocked for moving, or you have one or multiple quest items.]])
     text8:SetWidth(scrollFrame.frame:GetWidth() - 20)
     scrollFrame:AddChild(text8)
     
@@ -278,7 +275,7 @@ There is currently no way of hiding the PQButton if you have a Shadowlands quest
         Item is missing from the equip slot for one of the quest loot items.
         None of the items are for your preferred spec.
 
-3. Find the largest potential ilvl upgrade for this spec based on your equipped gear (considering that warforge is possible).
+3. Find the largest potential ilvl upgrade for this spec based on your equipped gear (factoring in sockets and considering that warforge is possible).
 
 4. If there is only one largest spec upgrade, then select that one.
     Stop automation if:
@@ -310,6 +307,23 @@ If you have any questions or ideas for features, you can post them at the discor
     
     scrollFrame:AddChild(discordLink)
     
+    local header7 = AceGUI:Create("Label")
+    header7:SetText("More Info:")
+    header7:SetWidth(scrollFrame.frame:GetWidth() - 20)
+    header7:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
+    header7:SetFontObject(GameFontHighlight)
+    scrollFrame:AddChild(header7)
+    
+    local text10 = AceGUI:Create("Label")
+    text10:SetText("You can find more information about this addon's individual features by visiting the curseforge page for this addon.")
+    text10:SetWidth(scrollFrame.frame:GetWidth() - 20)
+    scrollFrame:AddChild(text10)
+    
+    local curseforgeLink = AceGUI:Create("EditBox")
+    curseforgeLink:SetText("https://www.curseforge.com/wow/addons/poliquest-shadowlands")
+    
+    scrollFrame:AddChild(curseforgeLink)
+
     scrollFrame:ResumeLayout()
     container:ResumeLayout()
     
