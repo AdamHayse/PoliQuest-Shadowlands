@@ -4,9 +4,9 @@ addonTable.innWhitelist = {
 
     -- Bastion
     ["Caretaker Calisaphene"] = true,
-    --["Caretaker Mirene"] = true,  -- Exclude due to quest
+    --["Caretaker Mirene"] = true,  -- Excluded due to quest
     ["Caretaker Theo"] = true,
-    ["Inkiep"] = true,
+    --["Inkiep"] = true, -- Excluded due to quest
 
     -- Maldraxxus
     ["Kere Kinblade"] = true,
@@ -15,7 +15,7 @@ addonTable.innWhitelist = {
     
     -- Ardenweald
     ["Flitterbit"] = true,
-    --["Flwngyrr"] = true, -- Exclude due to quest
+    --["Flwngyrr"] = true, -- Excluded due to quest
     ["Kewarin"] = true,
     ["Llar'reth"] = true,
     ["Nolon"] = true,
