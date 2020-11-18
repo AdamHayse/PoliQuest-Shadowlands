@@ -129,6 +129,18 @@ local drawConfigTab = function(container)
     QuestEmoteAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestEmoteAutomation", key) end)
     container:AddChild(QuestEmoteAutomationCheckButton)
     
+    local SkipCutscenesCheckButton = AceGUI:Create("CheckBox")
+    SkipCutscenesCheckButton:SetLabel("Skip Cutscenes")
+    SkipCutscenesCheckButton:SetValue(PoliSavedVars.SkipCutscenes.enabled)
+    SkipCutscenesCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("SkipCutscenes", key) end)
+    container:AddChild(SkipCutscenesCheckButton)
+    
+    local MailboxAutomationCheckButton = AceGUI:Create("CheckBox")
+    MailboxAutomationCheckButton:SetLabel("Auto-retrieve Radinax Gems")
+    MailboxAutomationCheckButton:SetValue(PoliSavedVars.SkipCutscenes.enabled)
+    MailboxAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("MailboxAutomation", key) end)
+    container:AddChild(MailboxAutomationCheckButton)
+    
     if InCombatLockdown() then
         updateCheckBoxEnabledStatus(container, true)
     else

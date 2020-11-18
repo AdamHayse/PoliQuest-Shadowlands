@@ -13,4 +13,6 @@ DialogHandler.lua
 HearthstoneHandler.lua
 RewardsHandler.lua
 EmotesHandler.lua
+SkipCutscenes.lua
+MailboxHandler.lua
 PoliQuest.lua

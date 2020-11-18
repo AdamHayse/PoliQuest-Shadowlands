@@ -16,7 +16,9 @@ local featureNames = {
     "QuestAndDialogAutomation",
     "HearthstoneAutomation",
     "QuestRewardEquipAutomation",
-    "QuestEmoteAutomation"
+    "QuestEmoteAutomation",
+    "SkipCutscenes",
+    "MailboxAutomation"
 }
 
 local PoliQuest_OnAddonLoaded = function(addonName)
@@ -46,6 +48,9 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             PoliSavedVars.QuestEmoteAutomation = {
                 ["enabled"] = true
             }
+            PoliSavedVars.SkipCutscenes = {
+                ["enabled"] = true
+            }
             if PoliSavedVars.questAutomationEnabled ~= nil then
                 PoliSavedVars.questAutomationEnabled = nil
                 PoliSavedVars.questLootAutomationEnabled = nil
@@ -58,6 +63,16 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             end
         else
             addonTable.QuestItemButton.Button:lock()
+        end
+        if PoliSavedVars.SkipCutscenes == nil then
+            PoliSavedVars.SkipCutscenes = {
+                ["enabled"] = true
+            }
+        end
+        if PoliSavedVars.MailboxAutomation == nil then
+            PoliSavedVars.MailboxAutomation = {
+                ["enabled"] = true
+            }
         end
         
         for _, featureName in ipairs(featureNames) do
@@ -138,7 +153,16 @@ local constantEventHandlers = {
     },
     ["CHAT_MSG_MONSTER_SAY"] = {
         addonTable.QuestEmoteAutomation_OnChatMsgMonsterSay
-    }
+    },
+    ["PLAY_MOVIE"] = {
+        addonTable.SkipCutscenes_OnPlayMovie
+    },
+    ["MAIL_INBOX_UPDATE"] = {
+        addonTable.MailboxAutomation_OnMailInboxUpdate
+    },
+    ["MAIL_SHOW"] = {
+        addonTable.MailboxAutomation_OnMailShow
+    },
 }
 
 -- will be populated with events and corresponding handlers when addon is loaded
