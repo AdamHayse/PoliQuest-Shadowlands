@@ -137,7 +137,7 @@ local drawConfigTab = function(container)
     
     local MailboxAutomationCheckButton = AceGUI:Create("CheckBox")
     MailboxAutomationCheckButton:SetLabel("Auto-retrieve Radinax Gems")
-    MailboxAutomationCheckButton:SetValue(PoliSavedVars.SkipCutscenes.enabled)
+    MailboxAutomationCheckButton:SetValue(PoliSavedVars.MailboxAutomation.enabled)
     MailboxAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("MailboxAutomation", key) end)
     container:AddChild(MailboxAutomationCheckButton)
     
