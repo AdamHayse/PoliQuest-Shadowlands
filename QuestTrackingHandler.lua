@@ -15,6 +15,6 @@ autoTrackQuests.name = "AutoTrackQuests"
 autoTrackQuests.events = {
     { "QUEST_ACCEPTED" }
 }
-questAndDialoautoTrackQuestsgAutomation.initialize = initialize
+autoTrackQuests.initialize = initialize
 autoTrackQuests.terminate = terminate
 addonTable[autoTrackQuests.name] = autoTrackQuests
