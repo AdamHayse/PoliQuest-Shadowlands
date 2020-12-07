@@ -16,4 +16,5 @@ EmotesHandler.lua
 SkipCutscenes.lua
 MailboxHandler.lua
 QuestProgressHandler.lua
+QuestTrackingHandler.lua
 PoliQuest.lua

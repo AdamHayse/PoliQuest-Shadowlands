@@ -400,7 +400,6 @@ addonTable.QuestAndDialogAutomation_OnQuestLogUpdate = function()
 end
 
 addonTable.QuestAndDialogAutomation_OnQuestAccepted = function(questID)
-    C_QuestLog.AddQuestWatch(questID, 1)
     if GossipFrame:IsVisible() then
         onGossipShow()
     end

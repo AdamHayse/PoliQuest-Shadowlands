@@ -146,6 +146,12 @@ local drawConfigTab = function(container)
     QuestProgressTrackerCheckButton:SetValue(PoliSavedVars.QuestProgressTracker.enabled)
     QuestProgressTrackerCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestProgressTracker", key) end)
     container:AddChild(QuestProgressTrackerCheckButton)
+
+    local AutoTrackQuestsCheckButton = AceGUI:Create("CheckBox")
+    AutoTrackQuestsCheckButton:SetLabel("Automatically Track Quests")
+    AutoTrackQuestsCheckButton:SetValue(PoliSavedVars.AutoTrackQuests.enabled)
+    AutoTrackQuestsCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("AutoTrackQuests", key) end)
+    container:AddChild(AutoTrackQuestsCheckButton)
     
     if InCombatLockdown() then
         updateCheckBoxEnabledStatus(container, true)

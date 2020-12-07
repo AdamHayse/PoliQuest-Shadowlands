@@ -19,7 +19,8 @@ local featureNames = {
     "QuestEmoteAutomation",
     "SkipCutscenes",
     "MailboxAutomation",
-    "QuestProgressTracker"
+    "QuestProgressTracker",
+    "AutoTrackQuests"
 }
 
 local PoliQuest_OnAddonLoaded = function(addonName)
@@ -57,6 +58,9 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             enabled = true
         }
         PoliSavedVars.QuestProgressTracker = PoliSavedVars.QuestProgressTracker or {
+            enabled = true
+        }
+        PoliSavedVars.AutoTrackQuests = PoliSavedVars.AutoTrackQuests or {
             enabled = true
         }
         for _, featureName in ipairs(featureNames) do
@@ -116,6 +120,7 @@ local constantEventHandlers = {
         addonTable.QuestProgressTracker_OnQuestLogUpdate
     },
     ["QUEST_ACCEPTED"] = {
+        addonTable.AutoTrackQuests_OnQuestAccepted,
         addonTable.QuestAndDialogAutomation_OnQuestAccepted
     },
     ["QUEST_REMOVED"] = {
