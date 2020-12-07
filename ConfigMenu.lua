@@ -140,6 +140,12 @@ local drawConfigTab = function(container)
     MailboxAutomationCheckButton:SetValue(PoliSavedVars.MailboxAutomation.enabled)
     MailboxAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("MailboxAutomation", key) end)
     container:AddChild(MailboxAutomationCheckButton)
+
+    local QuestProgressTrackerCheckButton = AceGUI:Create("CheckBox")
+    QuestProgressTrackerCheckButton:SetLabel("Quest Progress Tracking")
+    QuestProgressTrackerCheckButton:SetValue(PoliSavedVars.QuestProgressTracker.enabled)
+    QuestProgressTrackerCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestProgressTracker", key) end)
+    container:AddChild(QuestProgressTrackerCheckButton)
     
     if InCombatLockdown() then
         updateCheckBoxEnabledStatus(container, true)

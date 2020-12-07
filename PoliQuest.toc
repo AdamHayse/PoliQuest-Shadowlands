@@ -15,4 +15,5 @@ RewardsHandler.lua
 EmotesHandler.lua
 SkipCutscenes.lua
 MailboxHandler.lua
+QuestProgressHandler.lua
 PoliQuest.lua

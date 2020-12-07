@@ -18,63 +18,47 @@ local featureNames = {
     "QuestRewardEquipAutomation",
     "QuestEmoteAutomation",
     "SkipCutscenes",
-    "MailboxAutomation"
+    "MailboxAutomation",
+    "QuestProgressTracker"
 }
 
 local PoliQuest_OnAddonLoaded = function(addonName)
     if addonName == "PoliQuest" then
-        if PoliSavedVars == nil or PoliSavedVars.questAutomationEnabled ~= nil then
-            PoliSavedVars = {}
-            addonTable.QuestItemButton.Button:unlock()
+        PoliSavedVars = PoliSavedVars or {}
+        if PoliSavedVars.QuestItemButton == nil then
             PoliSavedVars.QuestItemButton = {
-                ["enabled"] = true,
-                ["xOffset"] = 0,
-                ["yOffset"] = 0,
-                ["relPoint"] = "CENTER",
+                enabled = true,
+                xOffset = 0,
+                yOffset = 0,
+                relPoint = "CENTER",
             }
-            PoliSavedVars.QuestAndDialogAutomation = {
-                ["enabled"] = true,
-                ["switches"] = {
-                    ["QuestRewardSelectionAutomation"] = true,
-                    ["StrictAutomation"] = false,
-                }
-            }
-            PoliSavedVars.HearthstoneAutomation = {
-                ["enabled"] = false
-            }
-            PoliSavedVars.QuestRewardEquipAutomation = {
-                ["enabled"] = true
-            }
-            PoliSavedVars.QuestEmoteAutomation = {
-                ["enabled"] = true
-            }
-            PoliSavedVars.SkipCutscenes = {
-                ["enabled"] = true
-            }
-            if PoliSavedVars.questAutomationEnabled ~= nil then
-                PoliSavedVars.questAutomationEnabled = nil
-                PoliSavedVars.questLootAutomationEnabled = nil
-                PoliSavedVars.questStrictAutomation = nil
-                PoliSavedVars.questLootEquipAutomationEnabled = nil
-                PoliSavedVars.hearthAutomationEnabled = nil
-                PoliSavedVars.relativePoint = nil
-                PoliSavedVars.xOffset = nil
-                PoliSavedVars.yOffset = nil
-            end
-        else
-            addonTable.QuestItemButton.Button:lock()
+            addonTable.QuestItemButton.Button:unlock()
         end
-        if PoliSavedVars.SkipCutscenes == nil then
-            PoliSavedVars.SkipCutscenes = {
-                ["enabled"] = true
+        PoliSavedVars.QuestAndDialogAutomation = PoliSavedVars.QuestAndDialogAutomation or {
+            enabled = true,
+            switches = {
+                QuestRewardSelectionAutomation = true,
+                StrictAutomation = false,
             }
-        end
-        if PoliSavedVars.MailboxAutomation == nil then
-            PoliSavedVars.MailboxAutomation = {
-                ["enabled"] = true
-            }
-        end
-        
+        }
+        PoliSavedVars.HearthstoneAutomation = PoliSavedVars.HearthstoneAutomation or {
+            enabled = false
+        }
+        PoliSavedVars.QuestRewardEquipAutomation = PoliSavedVars.QuestRewardEquipAutomation or {
+            enabled = true
+        }
+        PoliSavedVars.QuestEmoteAutomation = PoliSavedVars.QuestEmoteAutomation or {
+            enabled = true
+        }
+        PoliSavedVars.SkipCutscenes = PoliSavedVars.SkipCutscenes or {
+            enabled = true
+        }
+        PoliSavedVars.MailboxAutomation = PoliSavedVars.MailboxAutomation or {
+            enabled = true
+        }
+        PoliSavedVars.QuestProgressTracker = PoliSavedVars.QuestProgressTracker or {
+            enabled = true
+        }
         for _, featureName in ipairs(featureNames) do
             addonTable.updateFeatureConfiguration(featureName, PoliSavedVars[featureName].enabled)
             local switches = PoliSavedVars[featureName].switches
@@ -128,13 +112,14 @@ local constantEventHandlers = {
         addonTable.QuestAndDialogAutomation_OnQuestComplete
     },
     ["QUEST_LOG_UPDATE"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestLogUpdate
+        addonTable.QuestAndDialogAutomation_OnQuestLogUpdate,
+        addonTable.QuestProgressTracker_OnQuestLogUpdate
     },
     ["QUEST_ACCEPTED"] = {
         addonTable.QuestAndDialogAutomation_OnQuestAccepted
     },
     ["QUEST_REMOVED"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestRemoved
+        addonTable.QuestProgressTracker_OnQuestRemoved
     },
     ["CONFIRM_BINDER"] = {
         addonTable.HearthstoneAutomation_OnConfirmBinder

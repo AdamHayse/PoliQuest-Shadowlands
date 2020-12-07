@@ -385,7 +385,6 @@ addonTable.QuestAndDialogAutomation_OnQuestComplete = function()
     end
 end
 
-local reportQuestProgressRefreshPending
 addonTable.QuestAndDialogAutomation_OnQuestLogUpdate = function()
     local num = GetNumAutoQuestPopUps()
     addonTable.debugPrint("numAutoQuestPopUps "..num)
@@ -398,7 +397,6 @@ addonTable.QuestAndDialogAutomation_OnQuestLogUpdate = function()
             end
         end
     end
-    reportQuestProgressRefreshPending = true
 end
 
 addonTable.QuestAndDialogAutomation_OnQuestAccepted = function(questID)
@@ -409,47 +407,10 @@ addonTable.QuestAndDialogAutomation_OnQuestAccepted = function(questID)
     QuestFrame:Hide()
 end
 
-local questProgresses
-addonTable.QuestAndDialogAutomation_OnQuestRemoved = function(questID)
-    questProgresses[questID] = nil
-end
-
-local reportQuestProgressLastRun
-local onUpdate = function()
-    if reportQuestProgressRefreshPending and (reportQuestProgressLastRun or 0) + .1 < GetTime() then
-        for i=1, C_QuestLog.GetNumQuestLogEntries() do
-            local questID = C_QuestLog.GetQuestIDForLogIndex(i)
-            local progress  = GetQuestProgressBarPercent(questID)
-            if progress > 0 and (not questProgresses[questID] or questProgresses[questID] ~= progress) then
-                local oldProgress = questProgresses[questID] or 0
-                questProgresses[questID] = progress
-                UIErrorsFrame:AddMessage(C_QuestLog.GetInfo(i).title .. ": " .. progress .. "% (" .. string.format("%+.1f", progress-oldProgress) .. "%)" , 1, 1, 0, 1)
-            end
-        end
-        reportQuestProgressLastRun = GetTime()
-        reportQuestProgressRefreshPending = false
-    end
-end
-
 local initialize = function()
-    reportQuestProgressRefreshPending = nil
-    reportQuestProgressLastRun = nil
-    questProgresses = {}
-    for i=1, C_QuestLog.GetNumQuestLogEntries() do
-        local questInfo = C_QuestLog.GetInfo(i)
-        if not questInfo.isHidden then
-            local questID = questInfo.questID
-            if questID > 0 then
-                questProgresses[questID] = GetQuestProgressBarPercent(questID)
-            end
-        end
-    end
 end
 
 local terminate = function()
-    reportQuestProgressRefreshPending = nil
-    reportQuestProgressLastRun = nil
-    questProgresses = nil
 end
 
 local questAndDialogAutomation = {}
@@ -461,10 +422,8 @@ questAndDialogAutomation.events = {
     { "QUEST_PROGRESS" },
     { "QUEST_COMPLETE" },
     { "QUEST_LOG_UPDATE" },
-    { "QUEST_ACCEPTED" },
-    { "QUEST_REMOVED" }
+    { "QUEST_ACCEPTED" }
 }
-questAndDialogAutomation.onUpdate = onUpdate
 questAndDialogAutomation.initialize = initialize
 questAndDialogAutomation.terminate = terminate
 questAndDialogAutomation.setSwitch = function(switchName, isEnabled)
