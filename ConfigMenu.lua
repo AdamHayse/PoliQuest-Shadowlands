@@ -81,14 +81,38 @@ updateCheckBoxEnabledStatus = function(container, childrenDisabled)
     end
 end
 
-local drawConfigTab = function(container)
+local drawGeneralTab = function(container)
     container:PauseLayout()
     local QuestItemButtonCheckButton = AceGUI:Create("CheckBox")
     QuestItemButtonCheckButton:SetLabel("Quest Item Button")
     QuestItemButtonCheckButton:SetValue(PoliSavedVars.QuestItemButton.enabled)
     QuestItemButtonCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestItemButton", key) end)
     container:AddChild(QuestItemButtonCheckButton)
+    
+    local SkipCutscenesCheckButton = AceGUI:Create("CheckBox")
+    SkipCutscenesCheckButton:SetLabel("Skip Cutscenes")
+    SkipCutscenesCheckButton:SetValue(PoliSavedVars.SkipCutscenes.enabled)
+    SkipCutscenesCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("SkipCutscenes", key) end)
+    container:AddChild(SkipCutscenesCheckButton)
 
+    local QuestProgressTrackerCheckButton = AceGUI:Create("CheckBox")
+    QuestProgressTrackerCheckButton:SetLabel("Quest Progress Tracking")
+    QuestProgressTrackerCheckButton:SetValue(PoliSavedVars.QuestProgressTracker.enabled)
+    QuestProgressTrackerCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestProgressTracker", key) end)
+    container:AddChild(QuestProgressTrackerCheckButton)
+    
+    if InCombatLockdown() then
+        updateCheckBoxEnabledStatus(container, true)
+    else
+        updateCheckBoxEnabledStatus(container, false)
+    end
+    
+    container:ResumeLayout()
+    container:DoLayout()
+end
+
+local drawAutomationTab = function(container)
+    container:PauseLayout()
     local StrictAutomationCheckButton = AceGUI:Create("CheckBox")
     StrictAutomationCheckButton:SetLabel("Strict Automation")
     StrictAutomationCheckButton:SetValue(PoliSavedVars.QuestAndDialogAutomation.switches.StrictAutomation)
@@ -117,12 +141,6 @@ local drawConfigTab = function(container)
     DialogInteractionAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("DialogInteractionAutomation", key) end)
     container:AddChild(DialogInteractionAutomationCheckButton)
 
-    local HearthstoneAutomationCheckButton = AceGUI:Create("CheckBox")
-    HearthstoneAutomationCheckButton:SetLabel("Hearthstone Automation")
-    HearthstoneAutomationCheckButton:SetValue(PoliSavedVars.HearthstoneAutomation.enabled)
-    HearthstoneAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("HearthstoneAutomation", key) end)
-    container:AddChild(HearthstoneAutomationCheckButton)
-
     local QuestRewardEquipAutomationCheckButton = AceGUI:Create("CheckBox")
     QuestRewardEquipAutomationCheckButton:SetLabel("Quest Reward Equip Automation")
     QuestRewardEquipAutomationCheckButton:SetValue(PoliSavedVars.QuestRewardEquipAutomation.enabled)
@@ -134,30 +152,36 @@ local drawConfigTab = function(container)
     QuestEmoteAutomationCheckButton:SetValue(PoliSavedVars.QuestEmoteAutomation.enabled)
     QuestEmoteAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestEmoteAutomation", key) end)
     container:AddChild(QuestEmoteAutomationCheckButton)
-    
-    local SkipCutscenesCheckButton = AceGUI:Create("CheckBox")
-    SkipCutscenesCheckButton:SetLabel("Skip Cutscenes")
-    SkipCutscenesCheckButton:SetValue(PoliSavedVars.SkipCutscenes.enabled)
-    SkipCutscenesCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("SkipCutscenes", key) end)
-    container:AddChild(SkipCutscenesCheckButton)
-    
-    local MailboxAutomationCheckButton = AceGUI:Create("CheckBox")
-    MailboxAutomationCheckButton:SetLabel("Auto-retrieve Radinax Gems")
-    MailboxAutomationCheckButton:SetValue(PoliSavedVars.MailboxAutomation.enabled)
-    MailboxAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("MailboxAutomation", key) end)
-    container:AddChild(MailboxAutomationCheckButton)
-
-    local QuestProgressTrackerCheckButton = AceGUI:Create("CheckBox")
-    QuestProgressTrackerCheckButton:SetLabel("Quest Progress Tracking")
-    QuestProgressTrackerCheckButton:SetValue(PoliSavedVars.QuestProgressTracker.enabled)
-    QuestProgressTrackerCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestProgressTracker", key) end)
-    container:AddChild(QuestProgressTrackerCheckButton)
 
     local AutoTrackQuestsCheckButton = AceGUI:Create("CheckBox")
     AutoTrackQuestsCheckButton:SetLabel("Automatically Track Quests")
     AutoTrackQuestsCheckButton:SetValue(PoliSavedVars.AutoTrackQuests.enabled)
     AutoTrackQuestsCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("AutoTrackQuests", key) end)
     container:AddChild(AutoTrackQuestsCheckButton)
+    
+    if InCombatLockdown() then
+        updateCheckBoxEnabledStatus(container, true)
+    else
+        updateCheckBoxEnabledStatus(container, false)
+    end
+    
+    container:ResumeLayout()
+    container:DoLayout()
+end
+
+local drawSpeedLevelingTab = function(container)
+    container:PauseLayout()
+    local HearthstoneAutomationCheckButton = AceGUI:Create("CheckBox")
+    HearthstoneAutomationCheckButton:SetLabel("Hearthstone Automation")
+    HearthstoneAutomationCheckButton:SetValue(PoliSavedVars.HearthstoneAutomation.enabled)
+    HearthstoneAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("HearthstoneAutomation", key) end)
+    container:AddChild(HearthstoneAutomationCheckButton)
+    
+    local MailboxAutomationCheckButton = AceGUI:Create("CheckBox")
+    MailboxAutomationCheckButton:SetLabel("Auto-retrieve Radinax Gems")
+    MailboxAutomationCheckButton:SetValue(PoliSavedVars.MailboxAutomation.enabled)
+    MailboxAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("MailboxAutomation", key) end)
+    container:AddChild(MailboxAutomationCheckButton)
     
     if InCombatLockdown() then
         updateCheckBoxEnabledStatus(container, true)
@@ -364,8 +388,14 @@ end
 local selectGroup = function(container, group)
     if group == "tab1" then
         container:SetLayout("PoliQuestConfig_Layout")
-        drawConfigTab(container)
+        drawGeneralTab(container)
     elseif group == "tab2" then
+        container:SetLayout("PoliQuestConfig_Layout")
+        drawAutomationTab(container)
+    elseif group == "tab3" then
+        container:SetLayout("PoliQuestConfig_Layout")
+        drawSpeedLevelingTab(container)
+    elseif group == "tab4" then
         container:SetLayout("Fill")
         drawDocumentationTab(container)
     end
@@ -386,7 +416,7 @@ local createMenu = function()
     configMenu:PauseLayout()
     
     configTab = AceGUI:Create("TabGroup")
-    configTab:SetTabs({{text="Feature Configuration", value="tab1"}, {text="Documentation", value="tab2"}})
+    configTab:SetTabs({{text="General", value="tab1"}, {text="Automation", value="tab2"}, {text="Speed Leveling", value="tab3"}, {text="Documentation", value="tab4"}})
     configTab:SetCallback("OnGroupSelected", function(self, event, group) self:ReleaseChildren() selectGroup(self, group) end)
     configMenu:AddChild(configTab)
     
