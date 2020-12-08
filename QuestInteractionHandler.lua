@@ -14,32 +14,9 @@ local AutoQuestPopUpTracker_OnMouseDown, GetQuestProgressBarPercent = AutoQuestP
 
 local questNames = addonTable.questNames
 local questIDToName = addonTable.questIDToName
-local dialogWhitelist = addonTable.dialogWhitelist
 local innWhitelist = addonTable.innWhitelist
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
 local bonusToIlvl = addonTable.bonusToIlvl
-
-local searchDialogOptions = function(questDialog)
-    local gossipOptions = C_GossipInfo.GetOptions()
-    local numOptions = C_GossipInfo.GetNumOptions()
-    for i=1, numOptions do
-        local gossip = gossipOptions[i]
-        local dialog = questDialog["dialog"]
-        if type(dialog) == "string" then
-            if questDialog["dialog"] == gossip["name"] then
-                C_GossipInfo.SelectOption(i)
-                return true
-            end
-        else
-            for _, v in ipairs(dialog) do
-                if v == gossip["name"] then
-                    C_GossipInfo.SelectOption(i)
-                    return true
-                end
-            end
-        end
-    end
-end
 
 local calculateStatIncrease = function(itemLink)
     local equipSlot = select(9, GetItemInfo(itemLink))
@@ -262,36 +239,13 @@ local onGossipShow = function()
             return
         end
     end
-
-    local numQuests = C_QuestLog.GetNumQuestLogEntries() or 0
-    addonTable.debugPrint("numQuests: "..numQuests)
-    for i=1, numQuests do
-        local questName = C_QuestLog.GetInfo(i).title
-        local questDialog = dialogWhitelist[questName]
-        if questDialog then
-            addonTable.debugPrint("Selecting quest dialog")
-            if type(questDialog["npc"]) == "string" then
-                if questDialog["npc"] == GossipFrameNpcNameText:GetText() then
-                    searchDialogOptions(questDialog)
-                end
-            else
-                for j, v in ipairs(questDialog["npc"]) do
-                    if questDialog["npc"][j] == GossipFrameNpcNameText:GetText() then
-                        if searchDialogOptions(questDialog) then
-                            return
-                        end
-                    end
-                end
-            end
-        end
-    end
 end
 
-addonTable.QuestAndDialogAutomation_OnGossipShow = function()
+addonTable.QuestInteractionAutomation_OnGossipShow = function()
     onGossipShow()
 end
 
-addonTable.QuestAndDialogAutomation_OnQuestGreeting = function()
+addonTable.QuestInteractionAutomation_OnQuestGreeting = function()
     addonTable.debugPrint("numActiveQuests: "..GetNumActiveQuests())
     for i=1, GetNumActiveQuests() do
         local questName, isComplete = GetActiveTitle(i)
@@ -318,7 +272,7 @@ addonTable.QuestAndDialogAutomation_OnQuestGreeting = function()
     end
 end
 
-addonTable.QuestAndDialogAutomation_OnQuestDetail = function()
+addonTable.QuestInteractionAutomation_OnQuestDetail = function()
     if QuestInfoTitleHeader ~= nil then
         addonTable.debugPrint("QuestInfoTitleHeader shown: true")
     else
@@ -343,7 +297,7 @@ addonTable.QuestAndDialogAutomation_OnQuestDetail = function()
     end
 end
 
-addonTable.QuestAndDialogAutomation_OnQuestProgress = function()
+addonTable.QuestInteractionAutomation_OnQuestProgress = function()
     if QuestProgressTitleText ~= nil then
         addonTable.debugPrint("QuestProgressTitleText shown: true")
     else
@@ -367,7 +321,7 @@ addonTable.QuestAndDialogAutomation_OnQuestProgress = function()
     end
 end
 
-addonTable.QuestAndDialogAutomation_OnQuestComplete = function()
+addonTable.QuestInteractionAutomation_OnQuestComplete = function()
     if QuestInfoTitleHeader ~= nil then
         addonTable.debugPrint("QuestInfoTitleHeader shown: true")
     else
@@ -385,7 +339,7 @@ addonTable.QuestAndDialogAutomation_OnQuestComplete = function()
     end
 end
 
-addonTable.QuestAndDialogAutomation_OnQuestLogUpdate = function()
+addonTable.QuestInteractionAutomation_OnQuestLogUpdate = function()
     local num = GetNumAutoQuestPopUps()
     addonTable.debugPrint("numAutoQuestPopUps "..num)
     if num > 0 then
@@ -399,7 +353,7 @@ addonTable.QuestAndDialogAutomation_OnQuestLogUpdate = function()
     end
 end
 
-addonTable.QuestAndDialogAutomation_OnQuestAccepted = function(questID)
+addonTable.QuestInteractionAutomation_OnQuestAccepted = function(questID)
     if GossipFrame:IsVisible() then
         onGossipShow()
     end
@@ -412,9 +366,9 @@ end
 local terminate = function()
 end
 
-local questAndDialogAutomation = {}
-questAndDialogAutomation.name = "QuestAndDialogAutomation"
-questAndDialogAutomation.events = {
+local questInteractionAutomation = {}
+questInteractionAutomation.name = "QuestInteractionAutomation"
+questInteractionAutomation.events = {
     { "GOSSIP_SHOW" },
     { "QUEST_GREETING" },
     { "QUEST_DETAIL" },
@@ -423,13 +377,13 @@ questAndDialogAutomation.events = {
     { "QUEST_LOG_UPDATE" },
     { "QUEST_ACCEPTED" }
 }
-questAndDialogAutomation.initialize = initialize
-questAndDialogAutomation.terminate = terminate
-questAndDialogAutomation.setSwitch = function(switchName, isEnabled)
+questInteractionAutomation.initialize = initialize
+questInteractionAutomation.terminate = terminate
+questInteractionAutomation.setSwitch = function(switchName, isEnabled)
     if switchName == "QuestRewardSelectionAutomation" then
         PoliQuestLootAutomationEnabled = isEnabled
     elseif switchName == "StrictAutomation" then
         PoliQuestStrictAutomation = isEnabled
     end
 end
-addonTable[questAndDialogAutomation.name] = questAndDialogAutomation
+addonTable[questInteractionAutomation.name] = questInteractionAutomation

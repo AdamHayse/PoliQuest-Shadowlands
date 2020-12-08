@@ -13,7 +13,8 @@ end
 
 local featureNames = {
     "QuestItemButton",
-    "QuestAndDialogAutomation",
+    "QuestInteractionAutomation",
+    "DialogInteractionAutomation",
     "HearthstoneAutomation",
     "QuestRewardEquipAutomation",
     "QuestEmoteAutomation",
@@ -35,12 +36,15 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             }
             addonTable.QuestItemButton.Button:unlock()
         end
-        PoliSavedVars.QuestAndDialogAutomation = PoliSavedVars.QuestAndDialogAutomation or {
+        PoliSavedVars.QuestInteractionAutomation = PoliSavedVars.QuestInteractionAutomation or {
             enabled = true,
             switches = {
                 QuestRewardSelectionAutomation = true,
                 StrictAutomation = false,
             }
+        }
+        PoliSavedVars.DialogInteractionAutomation = PoliSavedVars.DialogInteractionAutomation or {
+            enabled = true
         }
         PoliSavedVars.HearthstoneAutomation = PoliSavedVars.HearthstoneAutomation or {
             enabled = false
@@ -100,28 +104,30 @@ local constantEventHandlers = {
         addonTable.QuestItemButton_OnUnitSpellcastSucceeded
     },
     ["GOSSIP_SHOW"] = {
-        addonTable.QuestAndDialogAutomation_OnGossipShow,
+        addonTable.QuestInteractionAutomation_OnGossipShow,
+        addonTable.DialogInteractionAutomation_OnGossipShow,
         addonTable.HearthstoneAutomation_OnGossipShow
     },
     ["QUEST_GREETING"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestGreeting
+        addonTable.QuestInteractionAutomation_OnQuestGreeting
     },
     ["QUEST_DETAIL"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestDetail
+        addonTable.QuestInteractionAutomation_OnQuestDetail
     },
     ["QUEST_PROGRESS"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestProgress
+        addonTable.QuestInteractionAutomation_OnQuestProgress
     },
     ["QUEST_COMPLETE"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestComplete
+        addonTable.QuestInteractionAutomation_OnQuestComplete
     },
     ["QUEST_LOG_UPDATE"] = {
-        addonTable.QuestAndDialogAutomation_OnQuestLogUpdate,
+        addonTable.QuestInteractionAutomation_OnQuestLogUpdate,
         addonTable.QuestProgressTracker_OnQuestLogUpdate
     },
     ["QUEST_ACCEPTED"] = {
         addonTable.AutoTrackQuests_OnQuestAccepted,
-        addonTable.QuestAndDialogAutomation_OnQuestAccepted
+        addonTable.DialogInteractionAutomation_OnQuestAccepted,
+        addonTable.QuestInteractionAutomation_OnQuestAccepted
     },
     ["QUEST_REMOVED"] = {
         addonTable.QuestProgressTracker_OnQuestRemoved

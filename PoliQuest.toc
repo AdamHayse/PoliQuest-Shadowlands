@@ -9,7 +9,8 @@ ConfigMenu.lua
 
 questdata.lua
 ItemHandler.lua
-DialogHandler.lua
+QuestInteractionHandler.lua
+DialogInteractionHandler.lua
 HearthstoneHandler.lua
 RewardsHandler.lua
 EmotesHandler.lua
