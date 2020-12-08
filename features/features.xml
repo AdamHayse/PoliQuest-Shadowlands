@@ -1,0 +1,15 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\FrameXML\UI.xsd">
+    <Script file="features\general\ItemHandler.lua"/>
+    <Script file="features\general\SkipCutscenes.lua"/>
+    <Script file="features\general\QuestProgressHandler.lua"/>
+    
+    <Script file="features\automation\QuestInteractionHandler.lua"/>
+    <Script file="features\automation\DialogInteractionHandler.lua"/>
+    <Script file="features\automation\EmotesHandler.lua"/>
+    <Script file="features\automation\RewardsHandler.lua"/>
+    <Script file="features\automation\QuestTrackingHandler.lua"/>
+    
+    <Script file="features\speed\HearthstoneHandler.lua"/>
+    <Script file="features\speed\MailboxHandler.lua"/>
+</Ui>

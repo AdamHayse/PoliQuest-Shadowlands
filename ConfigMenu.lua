@@ -106,14 +106,14 @@ local drawConfigTab = function(container)
 
     local QuestInteractionAutomationCheckButton = AceGUI:Create("CheckBox")
     QuestInteractionAutomationCheckButton:SetLabel("Quest Interaction Automation")
-    QuestInteractionAutomationCheckButton:SetValue(PoliSavedVars.QuestAndDialogAutomation.enabled)
+    QuestInteractionAutomationCheckButton:SetValue(PoliSavedVars.QuestInteractionAutomation.enabled)
     QuestInteractionAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestInteractionAutomation", key) end)
     QuestInteractionAutomationCheckButton:SetUserData("children", { QuestRewardSelectionAutomationCheckButton })
     container:AddChild(QuestInteractionAutomationCheckButton)
 
     local DialogInteractionAutomationCheckButton = AceGUI:Create("CheckBox")
     DialogInteractionAutomationCheckButton:SetLabel("Dialog Interaction Automation")
-    DialogInteractionAutomationCheckButton:SetValue(PoliSavedVars.HearthstoneAutomation.enabled)
+    DialogInteractionAutomationCheckButton:SetValue(PoliSavedVars.DialogInteractionAutomation.enabled)
     DialogInteractionAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("DialogInteractionAutomation", key) end)
     container:AddChild(DialogInteractionAutomationCheckButton)
 

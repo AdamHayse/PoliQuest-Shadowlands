@@ -8,14 +8,5 @@ embeds.xml
 ConfigMenu.lua
 
 questdata.lua
-ItemHandler.lua
-QuestInteractionHandler.lua
-DialogInteractionHandler.lua
-HearthstoneHandler.lua
-RewardsHandler.lua
-EmotesHandler.lua
-SkipCutscenes.lua
-MailboxHandler.lua
-QuestProgressHandler.lua
-QuestTrackingHandler.lua
+features/features.xml
 PoliQuest.lua
