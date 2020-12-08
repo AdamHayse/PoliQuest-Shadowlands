@@ -59,6 +59,12 @@ addonTable.DialogInteractionAutomation_OnQuestAccepted = function(questID)
     end
 end
 
+local initialize = function()
+end
+
+local terminate = function()
+end
+
 local dialogInteractionAutomation = {}
 dialogInteractionAutomation.name = "DialogInteractionAutomation"
 dialogInteractionAutomation.events = {
