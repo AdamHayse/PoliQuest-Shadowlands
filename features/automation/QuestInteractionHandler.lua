@@ -8,7 +8,7 @@ local GetActiveQuests, SelectActiveQuest, GetAvailableQuests, SelectAvailableQue
 local GetNumActiveQuests, GetActiveTitle, GetNumAvailableQuests, GetAvailableQuestInfo = GetNumActiveQuests, GetActiveTitle, GetNumAvailableQuests, GetAvailableQuestInfo
 local AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAutoQuestPopUps, GetAutoQuestPopUp = AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAutoQuestPopUps, GetAutoQuestPopUp
 local QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame = QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame
-local AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE, GossipFrame, AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE, GossipFrame
+local AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE, AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE
 
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
 local questNames = addonTable.questNames
