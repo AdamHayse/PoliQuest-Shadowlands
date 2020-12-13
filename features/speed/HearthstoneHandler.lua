@@ -1,10 +1,11 @@
 local _, addonTable = ...
 
-local C_GossipInfo, UnitLevel, UnitName = C_GossipInfo, UnitLevel, UnitName
+local UnitLevel, UnitName, GetOptions, GetNumOptions, SelectOption = UnitLevel, UnitName, C_GossipInfo.GetOptions, C_GossipInfo.GetNumOptions, C_GossipInfo.SelectOption
+local GossipFrameNpcNameText, StaticPopup1Button1 = GossipFrameNpcNameText, StaticPopup1Button1
 
 local innWhitelist = addonTable.innWhitelist
 
-local onConfirmBinder = function()
+local function onConfirmBinder()
     if UnitLevel("player") < 60 then
         local targetName = UnitName("target")
         if GossipFrameNpcNameText:GetText() and innWhitelist[GossipFrameNpcNameText:GetText()]
@@ -14,13 +15,13 @@ local onConfirmBinder = function()
     end
 end
 
-addonTable.HearthstoneAutomation_OnGossipShow = function()
+function addonTable.HearthstoneAutomation_OnGossipShow()
     if innWhitelist[GossipFrameNpcNameText:GetText()] then
-        local gossipOptions = C_GossipInfo.GetOptions()
-        local numOptions = C_GossipInfo.GetNumOptions()
+        local gossipOptions = GetOptions()
+        local numOptions = GetNumOptions()
         for i=1, numOptions do
-            if gossipOptions[i]["type"] == "binder" then
-                C_GossipInfo.SelectOption(i)
+            if gossipOptions[i].type == "binder" then
+                SelectOption(i)
                 StaticPopup1Button1:Click("LeftButton")
             end
         end
@@ -31,10 +32,10 @@ addonTable.HearthstoneAutomation_OnConfirmBinder = onConfirmBinder
 
 addonTable.HearthstoneAutomation_OnGossipClosed = onConfirmBinder
 
-local initialize = function()
+local function initialize()
 end
 
-local terminate = function()
+local function terminate()
 end
 
 local hearthstoneAutomation = {}

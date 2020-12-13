@@ -1,7 +1,8 @@
 local _, addonTable = ...
 
-local featureEnabled
+local CinematicFrame, CinematicFrame_CancelCinematic, GameMovieFinished, StopCinematic = CinematicFrame, CinematicFrame_CancelCinematic, GameMovieFinished, StopCinematic
 
+local featureEnabled
 CinematicFrame:HookScript("OnShow", function()
     if featureEnabled then
         CinematicFrame_CancelCinematic()
@@ -18,15 +19,15 @@ MovieFrame_PlayMovie = function(...)
     end
 end
 
-addonTable.SkipCutscenes_OnPlayMovie = function()
+function addonTable.SkipCutscenes_OnPlayMovie()
     StopCinematic()
 end
 
-local initialize = function()
+local function initialize()
     featureEnabled = true
 end
 
-local terminate = function()
+local function terminate()
     featureEnabled = false
 end
 

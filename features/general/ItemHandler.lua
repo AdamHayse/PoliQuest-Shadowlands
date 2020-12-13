@@ -1,14 +1,12 @@
 local _, addonTable = ...
 
-local ipairs, pairs, GetItemCount, GetItemInfo = ipairs, pairs, GetItemCount, GetItemInfo
-local GetItemIcon, GetItemCooldown, CreateFrame = GetItemIcon, GetItemCooldown, CreateFrame
-local UIParent, print, table, GetTime, select = UIParent, print, table, GetTime, select
-local InCombatLockdown, GameTooltip, GameTooltip_SetDefaultAnchor = InCombatLockdown, GameTooltip, GameTooltip_SetDefaultAnchor
+local CreateFrame, UIParent, GameTooltip, GameTooltip_SetDefaultAnchor = CreateFrame, UIParent, GameTooltip, GameTooltip_SetDefaultAnchor
+local select, print, pairs, ipairs, tinsert = select, print, pairs, ipairs, table.insert
+local GetItemInfo, GetItemIcon, GetItemCooldown, GetItemCount, GetTime, InCombatLockdown = GetItemInfo, GetItemIcon, GetItemCooldown, GetItemCount, GetTime, InCombatLockdown
 
 local questItems = addonTable.questItems
 
 local currentItems, currentItemIndex
-
 -- quest item button
 local pqButton = CreateFrame("Button", "PQButton", UIParent, "SecureActionButtonTemplate")
 pqButton.Texture = pqButton:CreateTexture("PoliQuestItemButtonTexture","BACKGROUND")
@@ -40,7 +38,7 @@ pqButton.FontString = pqButton:CreateFontString("PoliQuestItemCount", "BACKGROUN
 pqButton.FontString:SetPoint("BOTTOMRIGHT", -4, 4)
 pqButton.FontString:SetFont("Fonts\\FRIZQT__.TTF", 20, "OUTLINE, MONOCHROME")
 
-pqButton.unlock = function(self)
+function pqButton.unlock(self)
     if not self:IsVisible() then
         buttonTexture = self.Texture:GetTexture()
         self.Texture:SetTexture(134400)
@@ -60,7 +58,7 @@ pqButton.unlock = function(self)
     self:SetMovable(true)
 end
 
-pqButton.lock = function(self)
+function pqButton.lock(self)
     if self:GetAttribute("item") == nil then
         self:Hide()
     end
@@ -70,7 +68,7 @@ pqButton.lock = function(self)
     print("|cFF5c8cc1/pq toggle:|r to show/move button again.")
 end
 
-local updateButton = function(refresh)
+local function updateButton(refresh)
     if #currentItems == 0 then
         currentItemIndex = nil
         pqButton:SetAttribute("item", nil) 
@@ -135,12 +133,12 @@ local updateButton = function(refresh)
     end
 end
 
-local prevItemButton_OnClick = function()
+local function prevItemButton_OnClick()
     currentItemIndex = (currentItemIndex - 2) % #currentItems + 1
     updateButton()
 end
 
-local nextItemButton_OnClick = function()
+local function nextItemButton_OnClick()
     currentItemIndex = currentItemIndex % #currentItems + 1
     updateButton()
 end
@@ -203,7 +201,7 @@ pqButton.LockButton = lockButton
 local pendingUpdate
 local throttleItemCheck
 
-addonTable.QuestItemButton_OnPlayerRegenEnabled = function()
+function addonTable.QuestItemButton_OnPlayerRegenEnabled()
     if not pendingUpdate and #currentItems > 1 then
         pqButton.PrevButton:Enable()
         pqButton.NextButton:Enable()
@@ -212,7 +210,7 @@ addonTable.QuestItemButton_OnPlayerRegenEnabled = function()
     end
 end
 
-addonTable.QuestItemButton_OnPlayerRegenDisabled = function()
+function addonTable.QuestItemButton_OnPlayerRegenDisabled()
     if #currentItems > 1 then
         pqButton.PrevButton:Disable()
         pqButton.NextButton:Disable()
@@ -221,7 +219,7 @@ addonTable.QuestItemButton_OnPlayerRegenDisabled = function()
     end
 end
 
-local bagUpdateEventsHandler = function()
+local function bagUpdateEventsHandler()
     if currentItemIndex then
         local itemCount = GetItemCount(currentItems[currentItemIndex])
         if itemCount > 1 then
@@ -237,15 +235,15 @@ addonTable.QuestItemButton_OnBagUpdate = bagUpdateEventsHandler
 
 addonTable.QuestItemButton_OnBagUpdateCooldown = bagUpdateEventsHandler
 
-addonTable.QuestItemButton_OnUnitSpellcastSucceeded = function(...)
-    if currentItemIndex and questItems[currentItems[currentItemIndex]] and questItems[currentItems[currentItemIndex]]["spellID"] == select(3, ...)
-    and questItems[currentItems[currentItemIndex]]["cooldown"] then
-        pqButton.Cooldown:SetCooldown(GetTime(), questItems[currentItems[currentItemIndex]]["cooldown"])
+function addonTable.QuestItemButton_OnUnitSpellcastSucceeded(...)
+    if currentItemIndex and questItems[currentItems[currentItemIndex]] and questItems[currentItems[currentItemIndex]].spellID == select(3, ...)
+    and questItems[currentItems[currentItemIndex]].cooldown then
+        pqButton.Cooldown:SetCooldown(GetTime(), questItems[currentItems[currentItemIndex]].cooldown)
     end
 end
 
 
-local itemsChanged = function()
+local function itemsChanged()
     -- questItems >= currentItems
     for itemID,_ in pairs(questItems) do
         local item = GetItemCount(itemID)
@@ -272,20 +270,20 @@ local itemsChanged = function()
     return false
 end
 
-local updateCurrentItems = function()
+local function updateCurrentItems()
     currentItems = {}
     for itemID, recordedItemInfo in pairs(questItems) do
         local count = GetItemCount(itemID)
         if count > 0 then
-            table.insert(currentItems, itemID)
-            questItems[itemID]["count"] = count
+            tinsert(currentItems, itemID)
+            questItems[itemID].count = count
         else
-            questItems[itemID]["count"] = 0
+            questItems[itemID].count = 0
         end
     end
 end
 
-local onUpdate = function()
+local function onUpdate()
     if throttleItemCheck and GetTime() - throttleItemCheck > .1 then
         if itemsChanged() then
             updateCurrentItems()
@@ -299,13 +297,13 @@ local onUpdate = function()
     end
 end
 
-local initialize = function()
+local function initialize()
     throttleItemCheck = nil
     updateCurrentItems()
     pendingUpdate = true
 end
 
-local terminate = function()
+local function terminate()
     throttleItemCheck = nil
     pendingUpdate = false
     currentItems = nil

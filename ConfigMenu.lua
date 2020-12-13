@@ -2,7 +2,8 @@ local addonName, addonTable = ...
 
 local AceGUI = LibStub("AceGUI-3.0")
 
-local xpcall = xpcall
+local xpcall, ipairs, print = xpcall, ipairs, print
+local InCombatLockdown, GameFontHighlightLarge, GameFontHighlight = InCombatLockdown, GameFontHighlightLarge, GameFontHighlight
 
 local function errorhandler(err)
 	return geterrorhandler()(err)
@@ -14,8 +15,7 @@ local function safecall(func, ...)
 	end
 end
 
-local anchorFramesWithDS
-anchorFramesWithDFS = function(root, rootPoint, parent, currentDepth, currentCount)
+local function anchorFramesWithDFS(root, rootPoint, parent, currentDepth, currentCount)
     if not parent:GetUserData("children") then
         return currentCount
     else
@@ -31,7 +31,7 @@ anchorFramesWithDFS = function(root, rootPoint, parent, currentDepth, currentCou
     end
 end
 
-local configLayout = function(parent, children)
+local function configLayout(parent, children)
     local leftColumnCount = 0
     local rightColumnCount = 0
     for i, child in ipairs(children) do
@@ -55,7 +55,7 @@ end
 
 AceGUI:RegisterLayout("PoliQuestConfig_Layout", configLayout)
 
-local menuLayout = function(parent, children)
+local function menuLayout(parent, children)
     local tabGroupFrame = children[1].frame
     local toggleButtonFrame = children[2].frame
     tabGroupFrame:ClearAllPoints()
@@ -70,8 +70,7 @@ end
 
 AceGUI:RegisterLayout("PoliQuestMenu_Layout", menuLayout)
 
-local updateCheckBoxEnabledStatus
-updateCheckBoxEnabledStatus = function(container, childrenDisabled)
+local function updateCheckBoxEnabledStatus(container, childrenDisabled)
     local children = container.children or container:GetUserData("children") or {}
     for _, child in ipairs(children) do
         child:SetDisabled(childrenDisabled)
@@ -81,7 +80,7 @@ updateCheckBoxEnabledStatus = function(container, childrenDisabled)
     end
 end
 
-local drawGeneralTab = function(container)
+local function drawGeneralTab(container)
     container:PauseLayout()
     local QuestItemButtonCheckButton = AceGUI:Create("CheckBox")
     QuestItemButtonCheckButton:SetLabel("Quest Item Button")
@@ -111,7 +110,7 @@ local drawGeneralTab = function(container)
     container:DoLayout()
 end
 
-local drawAutomationTab = function(container)
+local function drawAutomationTab(container)
     container:PauseLayout()
     local StrictAutomationCheckButton = AceGUI:Create("CheckBox")
     StrictAutomationCheckButton:SetLabel("Strict Automation")
@@ -169,7 +168,7 @@ local drawAutomationTab = function(container)
     container:DoLayout()
 end
 
-local drawSpeedLevelingTab = function(container)
+local function drawSpeedLevelingTab(container)
     container:PauseLayout()
     local HearthstoneAutomationCheckButton = AceGUI:Create("CheckBox")
     HearthstoneAutomationCheckButton:SetLabel("Hearthstone Automation")
@@ -193,12 +192,11 @@ local drawSpeedLevelingTab = function(container)
     container:DoLayout()
 end
 
-local documentationLayout = function(parent, children)
+local function documentationLayout(parent, children)
     local height = 0
     local width = parent.width or parent:GetWidth() or 0
     for i = 1, #children do
         local child = children[i]
-
         local frame = child.frame
         frame:ClearAllPoints()
         frame:Show()
@@ -208,7 +206,6 @@ local documentationLayout = function(parent, children)
         else
             frame:SetPoint("TOPLEFT", children[i-1].frame, "BOTTOMLEFT", 0, -10)
         end
-
         height = height + 10 + (frame.height or frame:GetHeight() or 0)
     end
     safecall(parent.obj.LayoutFinished, parent.obj, nil, height)
@@ -216,7 +213,7 @@ end
 
 AceGUI:RegisterLayout("PoliQuestDocumentation_Layout", documentationLayout)
 
-local drawDocumentationTab = function(container)
+local function drawDocumentationTab(container)
     local scrollFrame = AceGUI:Create("ScrollFrame")
     scrollFrame:SetLayout("PoliQuestDocumentation_Layout")
     container:AddChild(scrollFrame)
@@ -385,7 +382,7 @@ If you have any questions or ideas for features, you can post them at the discor
     container:DoLayout()
 end
 
-local selectGroup = function(container, group)
+local function selectGroup(container, group)
     if group == "tab1" then
         container:SetLayout("PoliQuestConfig_Layout")
         drawGeneralTab(container)
@@ -402,10 +399,9 @@ local selectGroup = function(container, group)
 end
 
 local configMenu, configTab
-local createMenu = function()
+function addonTable.createMenu()
     configMenu = AceGUI:Create("Frame")
     configMenu:SetTitle("PoliQuest Configuration")
-    configMenu:SetStatusText("AceGUI-3.0 Example Container Frame")
     configMenu.statustext:GetParent():Hide()
     configMenu:EnableResize(false)
     configMenu:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
@@ -436,16 +432,15 @@ local createMenu = function()
     configMenu:AddChild(toggleButton)
 
     configTab:SelectTab("tab1")
+    return configMenu
 end
 
-addonTable.configMenu = configMenu
-addonTable.createMenu = createMenu
 
 local menuLockdownFrame = CreateFrame("Frame")
 menuLockdownFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 menuLockdownFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 menuLockdownFrame:SetScript("OnEvent", function(self, event)
-    if configMenu and configMenu:IsVisible() and configTab.tabs and configTab.tabs[1].selected then
+    if configMenu and configMenu:IsVisible() and configTab.tabs and (configTab.tabs[1].selected or configTab.tabs[2].selected or configTab.tabs[2].selected) then
         if event == "PLAYER_REGEN_ENABLED" then
             updateCheckBoxEnabledStatus(configTab, false)
         else

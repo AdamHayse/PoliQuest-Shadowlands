@@ -13,21 +13,20 @@ local function onMailboxShow()
     end
 end
 
-
-addonTable.MailboxAutomation_OnMailInboxUpdate = function()
+function addonTable.MailboxAutomation_OnMailInboxUpdate()
     onMailboxShow()
 end
 
-addonTable.MailboxAutomation_OnMailShow = function()
+function addonTable.MailboxAutomation_OnMailShow()
     if GetInboxNumItems() > 0 then
         onMailboxShow()
     end
 end
 
-local initialize = function()
+local function initialize()
 end
 
-local terminate = function()
+local function terminate()
 end
 
 local mailboxAutomation = {}

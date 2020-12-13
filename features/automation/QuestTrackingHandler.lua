@@ -1,13 +1,15 @@
 local _, addonTable = ...
 
-addonTable.AutoTrackQuests_OnQuestAccepted = function(questID)
-    C_QuestLog.AddQuestWatch(questID, 1)
+local AddQuestWatch = C_QuestLog.AddQuestWatch
+
+function addonTable.AutoTrackQuests_OnQuestAccepted(questID)
+    AddQuestWatch(questID, 1)
 end
 
-local initialize = function()
+local function initialize()
 end
 
-local terminate = function()
+local function terminate()
 end
 
 local autoTrackQuests = {}

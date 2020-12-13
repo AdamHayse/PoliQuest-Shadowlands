@@ -1,15 +1,7 @@
 local addonName, addonTable = ...
 
-local InCombatLockdown, ipairs, string, CreateFrame = InCombatLockdown, ipairs, string, CreateFrame
-local print, select = print, select
-
-_G["PoliQuest"] = addonTable
-
-addonTable.debugPrint = function(text)
-    if POLIQUEST_DEBUG_ENABLED then
-        print("|cFF5c8cc1PoliQuest:|r " .. text)
-    end
-end
+local print, ipairs, ssplit, supper, pairs, select, unpack, tinsert, tremove = print, ipairs, string.split, string.upper, pairs, select, unpack, table.insert, table.remove
+local InCombatLockdown, CreateFrame, UIParent = InCombatLockdown, CreateFrame, UIParent
 
 local featureNames = {
     "QuestItemButton",
@@ -24,7 +16,7 @@ local featureNames = {
     "AutoTrackQuests"
 }
 
-local PoliQuest_OnAddonLoaded = function(addonName)
+local function PoliQuest_OnAddonLoaded(addonName)
     if addonName == "PoliQuest" then
         PoliSavedVars = PoliSavedVars or {}
         if PoliSavedVars.QuestItemButton == nil then
@@ -77,102 +69,102 @@ local PoliQuest_OnAddonLoaded = function(addonName)
             end
         end
         addonTable.QuestItemButton.Button:ClearAllPoints()
-        addonTable.QuestItemButton.Button:SetPoint(PoliSavedVars.QuestItemButton.relPoint, UIParent, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset)
+        addonTable.QuestItemButton.Button:SetPoint(PoliSavedVars.QuestItemButton.relPoint, UIParent, PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset)
     end
 end
 
-local PoliQuest_OnPlayerLogout = function()
+local function PoliQuest_OnPlayerLogout()
     PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset = select(3, addonTable.QuestItemButton.Button:GetPoint(1))
 end
 
 
 -- All events handled by feature handlers, and the orders in which they should execute with respect to each other
 local constantEventHandlers = {
-    ["PLAYER_REGEN_ENABLED"] = {
+    PLAYER_REGEN_ENABLED = {
         addonTable.QuestItemButton_OnPlayerRegenEnabled
     },
-    ["PLAYER_REGEN_DISABLED"] = {
+    PLAYER_REGEN_DISABLED = {
         addonTable.QuestItemButton_OnPlayerRegenDisabled
     },
-    ["BAG_UPDATE"] = {
+    BAG_UPDATE = {
         addonTable.QuestItemButton_OnBagUpdate
     },
-    ["BAG_UPDATE_COOLDOWN"] = {
+    BAG_UPDATE_COOLDOWN = {
         addonTable.QuestItemButton_OnBagUpdateCooldown
     },
-    ["UNIT_SPELLCAST_SUCCEEDED"] = {
+    UNIT_SPELLCAST_SUCCEEDED = {
         addonTable.QuestItemButton_OnUnitSpellcastSucceeded
     },
-    ["GOSSIP_SHOW"] = {
+    GOSSIP_SHOW = {
         addonTable.QuestInteractionAutomation_OnGossipShow,
         addonTable.DialogInteractionAutomation_OnGossipShow,
         addonTable.HearthstoneAutomation_OnGossipShow
     },
-    ["QUEST_GREETING"] = {
+    QUEST_GREETING = {
         addonTable.QuestInteractionAutomation_OnQuestGreeting
     },
-    ["QUEST_DETAIL"] = {
+    QUEST_DETAIL = {
         addonTable.QuestInteractionAutomation_OnQuestDetail
     },
-    ["QUEST_PROGRESS"] = {
+    QUEST_PROGRESS = {
         addonTable.QuestInteractionAutomation_OnQuestProgress
     },
-    ["QUEST_COMPLETE"] = {
+    QUEST_COMPLETE = {
         addonTable.QuestInteractionAutomation_OnQuestComplete
     },
-    ["QUEST_LOG_UPDATE"] = {
+    QUEST_LOG_UPDATE = {
         addonTable.QuestInteractionAutomation_OnQuestLogUpdate,
         addonTable.QuestProgressTracker_OnQuestLogUpdate
     },
-    ["QUEST_ACCEPTED"] = {
+    QUEST_ACCEPTED = {
         addonTable.AutoTrackQuests_OnQuestAccepted,
         addonTable.DialogInteractionAutomation_OnQuestAccepted,
         addonTable.QuestInteractionAutomation_OnQuestAccepted
     },
-    ["QUEST_REMOVED"] = {
+    QUEST_REMOVED = {
         addonTable.QuestProgressTracker_OnQuestRemoved
     },
-    ["CONFIRM_BINDER"] = {
+    CONFIRM_BINDER = {
         addonTable.HearthstoneAutomation_OnConfirmBinder
     },
-    ["GOSSIP_CLOSED"] = {
+    GOSSIP_CLOSED = {
         addonTable.HearthstoneAutomation_OnGossipClosed
     },
-    ["QUEST_LOOT_RECEIVED"] = {
+    QUEST_LOOT_RECEIVED = {
         addonTable.QuestRewardEquipAutomation_OnQuestLootReceived
     },
-    ["PLAYER_EQUIPMENT_CHANGED"] = {
+    PLAYER_EQUIPMENT_CHANGED = {
         addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged
     },
-    ["PLAYER_TARGET_CHANGED"] = {
+    PLAYER_TARGET_CHANGED = {
         addonTable.QuestEmoteAutomation_OnPlayerTargetChanged
     },
-    ["CHAT_MSG_MONSTER_SAY"] = {
+    CHAT_MSG_MONSTER_SAY = {
         addonTable.QuestEmoteAutomation_OnChatMsgMonsterSay
     },
-    ["PLAY_MOVIE"] = {
+    PLAY_MOVIE = {
         addonTable.SkipCutscenes_OnPlayMovie
     },
-    ["MAIL_INBOX_UPDATE"] = {
+    MAIL_INBOX_UPDATE = {
         addonTable.MailboxAutomation_OnMailInboxUpdate
     },
-    ["MAIL_SHOW"] = {
+    MAIL_SHOW = {
         addonTable.MailboxAutomation_OnMailShow
     },
 }
 
 -- will be populated with events and corresponding handlers when addon is loaded
 local eventHandlers = {
-    ["ADDON_LOADED"] = { PoliQuest_OnAddonLoaded },
-    ["PLAYER_LOGOUT"] = { PoliQuest_OnPlayerLogout }
+    ADDON_LOADED = { PoliQuest_OnAddonLoaded },
+    PLAYER_LOGOUT = { PoliQuest_OnPlayerLogout }
 }
 local updateHandlers = {}
 
-local addEventHandlers = function(featureName, events)
+local function addEventHandlers(featureName, events)
     for i, v in ipairs(events) do
         local event, unit = unpack(v)
         -- example: The strings QuestAndDialogAutomation and QUEST_REMOVED become the function QuestAndDialogAutomation_OnQuestRemoved
-        local handlerName = featureName .. "_On" .. event:gsub("_", " "):lower():gsub("(%l)(%w*)", function(a,b) return string.upper(a)..b end):gsub(" ", "")
+        local handlerName = featureName .. "_On" .. event:gsub("_", " "):lower():gsub("(%l)(%w*)", function(a,b) return supper(a)..b end):gsub(" ", "")
         local newEventHandler = addonTable[handlerName]
         local eventHandlerSet = eventHandlers[event]
         if not eventHandlerSet then
@@ -187,7 +179,7 @@ local addEventHandlers = function(featureName, events)
             while eventHandlerSet[j] do
                 -- if handler should be before the current one, then insert at this index
                 if constantEventHandlers[event][j] == newEventHandler and eventHandlerSet[j] ~= newEventHandler then
-                    table.insert(eventHandlerSet, j, newEventHandler)
+                    tinsert(eventHandlerSet, j, newEventHandler)
                     break
                 -- do nothing if handler is already inserted
                 elseif eventHandlerSet[j] == newEventHandler then
@@ -196,22 +188,22 @@ local addEventHandlers = function(featureName, events)
                 j = j + 1
             end
             if j == #eventHandlerSet + 1 then
-                table.insert(eventHandlerSet, newEventHandler)
+                tinsert(eventHandlerSet, newEventHandler)
             end
         end
     end
 end
 
-local removeEventHandlers = function(featureName, events)
+local function removeEventHandlers(featureName, events)
     for i, v in ipairs(events) do
         local event = unpack(v)
         -- example: The strings QuestAndDialogAutomation and QUEST_REMOVED become the function QuestAndDialogAutomation_OnQuestRemoved
-        local eventHandlerToRemove = addonTable[featureName .. "_On" .. event:gsub("_", " "):lower():gsub("(%l)(%w*)", function(a,b) return string.upper(a)..b end):gsub(" ", "")]
+        local eventHandlerToRemove = addonTable[featureName .. "_On" .. event:gsub("_", " "):lower():gsub("(%l)(%w*)", function(a,b) return supper(a)..b end):gsub(" ", "")]
         local eventHandlerSet = eventHandlers[event]
         if eventHandlerSet then
             for j, handlerFunction in ipairs(eventHandlerSet) do
                 if eventHandlerSet[j] == eventHandlerToRemove then
-                    table.remove(eventHandlerSet, j)
+                    tremove(eventHandlerSet, j)
                 end
             end
             if #eventHandlerSet == 0 then
@@ -222,7 +214,7 @@ local removeEventHandlers = function(featureName, events)
     end
 end
 
-local addUpdateHandler = function(featureName)
+local function addUpdateHandler(featureName)
     local newUpdateHandler = addonTable[featureName].onUpdate
     local handlerFound = false
     for _, updateHandler in ipairs(updateHandlers) do
@@ -232,20 +224,20 @@ local addUpdateHandler = function(featureName)
         end
     end
     if not handlerFound then
-        table.insert(updateHandlers, newUpdateHandler)
+        tinsert(updateHandlers, newUpdateHandler)
     end
 end
 
-local removeUpdateHandler = function(featureName)
+local function removeUpdateHandler(featureName)
     local updateHandlerToRemove = addonTable[featureName].onUpdate
     for i, updateHandler in ipairs(updateHandlers) do
         if updateHandler == updateHandlerToRemove then
-            table.remove(updateHandlers, i)
+            tremove(updateHandlers, i)
         end
     end
 end
 
-addonTable.updateFeatureConfiguration = function(featureName, isEnabled)
+function addonTable.updateFeatureConfiguration(featureName, isEnabled)
     if isEnabled then
         addEventHandlers(featureName, addonTable[featureName].events)
         addonTable[featureName].initialize()
@@ -262,19 +254,19 @@ addonTable.updateFeatureConfiguration = function(featureName, isEnabled)
     PoliSavedVars[featureName].enabled = isEnabled
 end
 
-addonTable.updateFeatureSwitch = function(featureName, switchName, isEnabled)
+function addonTable.updateFeatureSwitch(featureName, switchName, isEnabled)
     addonTable[featureName].setSwitch(switchName, isEnabled)
     PoliSavedVars[featureName].switches[switchName] = isEnabled
 end
 
-local PoliQuest_OnEvent = function(self, event, ...)
+local function PoliQuest_OnEvent(self, event, ...)
     local eventHandlerSet = eventHandlers[event]
     for _, eventHandler in ipairs(eventHandlerSet) do
         eventHandler(...)
     end
 end
 
-local PoliQuest_OnUpdate = function()
+local function PoliQuest_OnUpdate()
     for _, updateHandler in ipairs(updateHandlers) do
         updateHandler()
     end
@@ -290,14 +282,15 @@ addonTable.EventHandler = poliQuestEventHandler
 SLASH_PoliQuest1 = "/poliquest"
 SLASH_PoliQuest2 = "/pq"
 
+local configMenu
 SlashCmdList["PoliQuest"] = function(msg)
-    local cmd, arg = string.split(" ", msg)
+    local cmd, arg = ssplit(" ", msg)
     if cmd == "" then
-        if addonTable.configMenu and addonTable.configMenu:IsVisible() then
-            addonTable.configMenu.frame:SetClampedToScreen(false)
-            addonTable.configMenu:Hide()
+        if configMenu and configMenu:IsVisible() then
+            configMenu.frame:SetClampedToScreen(false)
+            configMenu:Hide()
         else
-            addonTable.createMenu()
+            configMenu = addonTable.createMenu()
         end
     elseif cmd == "toggle" then
         if InCombatLockdown() then

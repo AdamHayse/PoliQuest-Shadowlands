@@ -1,20 +1,25 @@
 local _, addonTable = ...
 
-local select, GetItemInfo, NUM_BAG_SLOTS, pairs, ipairs = select, GetItemInfo, NUM_BAG_SLOTS, pairs, ipairs
-local ItemLocation, C_Item, GetInventoryItemLink = ItemLocation, C_Item, GetInventoryItemLink
-local table, GetTime, type, GetSpecializationInfo, GetSpecialization = table, GetTime, type, GetSpecializationInfo, GetSpecialization
-local GetContainerNumSlots, GetContainerItemLink, GetItemSpecInfo = GetContainerNumSlots, GetContainerItemLink, GetItemSpecInfo
-local InCombatLockdown, EquipItemByName, _G, CreateFrame = InCombatLockdown, EquipItemByName, _G, CreateFrame
+local pairs, select, ipairs, smatch, ssplit, tonumber, type, tinsert, tremove = pairs, select, ipairs, string.match, string.split, tonumber, type, table.insert, table.remove
+local GetItemSpecInfo, GetSpecializationInfo, GetSpecialization, GetItemInfo = GetItemSpecInfo, GetSpecializationInfo, GetSpecialization, GetItemInfo
+local GetContainerNumSlots, GetContainerItemLink, GetItemLink, GetCurrentItemLevel = GetContainerNumSlots, GetContainerItemLink, C_Item.GetItemLink, C_Item.GetCurrentItemLevel
+local GetInventoryItemLink, GetTime, GetItemName, InCombatLockdown, EquipItemByName = GetInventoryItemLink, GetTime, C_Item.GetItemName, InCombatLockdown, EquipItemByName
+local NUM_BAG_SLOTS, ItemLocation, _G = NUM_BAG_SLOTS, ItemLocation, _G
 
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
 local levelingItems = addonTable.levelingItems
 local bonusToIlvl = addonTable.bonusToIlvl
 
+local function debugPrint(text)
+    if DEBUG_REWARDS_HANDLER then
+        print("|cFF5c8cc1PoliQuest:|r " .. text)
+    end
+end
 
 local scanningTooltip = CreateFrame("GameTooltip", "PoliScanningTooltip", nil, "GameTooltipTemplate")
 scanningTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
-local isBoP = function(itemLink)
+local function isBoP(itemLink)
     scanningTooltip:ClearLines()
     scanningTooltip:SetHyperlink(itemLink)
     for i=1, scanningTooltip:NumLines() do
@@ -25,7 +30,7 @@ local isBoP = function(itemLink)
     return false
 end
 
-local isSpecItem = function(itemLink)
+local function isSpecItem(itemLink)
     local specs = GetItemSpecInfo(itemLink) or {}
     if #specs == 0 then
         return true
@@ -39,7 +44,7 @@ local isSpecItem = function(itemLink)
     return false
 end
 
-local isBoPEquipableSpecItem = function(itemLink)
+local function isBoPEquipableSpecItem(itemLink)
     local itemEquipLoc = select(9, GetItemInfo(itemLink))
     if itemEquipLoc ~= "" and itemEquipLocToEquipSlot[itemEquipLoc] then
         if isBoP(itemLink) and isSpecItem(itemLink) then
@@ -49,7 +54,7 @@ local isBoPEquipableSpecItem = function(itemLink)
     return false
 end
 
-local getBagAndSlot = function(itemName)
+local function getBagAndSlot(itemName)
     for bagID = 0, NUM_BAG_SLOTS do
         for slotIndex = 1, GetContainerNumSlots(bagID) do
             local containerItemLink = GetContainerItemLink(bagID, slotIndex)
@@ -61,23 +66,23 @@ local getBagAndSlot = function(itemName)
     return nil
 end
 
-local bonusIlvlEquivalent = function(itemLink)
+local function bonusIlvlEquivalent(itemLink)
     local itemName = GetItemInfo(itemLink)
     for _, v in ipairs(levelingItems) do if itemName == v then return 1000 end end
     local bonus = 0
     if itemName:find("Bit Band") or itemName:find("Logic Loop") then
         bonus = 20
     end
-    local itemString = string.match(itemLink, "item[%-?%d:]+")
-    local _, enchant, gem1, gem2, gem3, gem4 = string.split(":", itemString)
+    local itemString = smatch(itemLink, "item[%-?%d:]+")
+    local _, enchant, gem1, gem2, gem3, gem4 = ssplit(":", itemString)
     bonus = bonus + bonusToIlvl[tonumber(enchant)] + bonusToIlvl[tonumber(gem1)] + bonusToIlvl[tonumber(gem2)] + bonusToIlvl[tonumber(gem3)] + bonusToIlvl[tonumber(gem4)]
     return bonus
 end
 
-local isUpgrade = function(bagID, slotIndex)
+local function isUpgrade(bagID, slotIndex)
     local mixin = ItemLocation:CreateFromBagAndSlot(bagID, slotIndex)
-    local itemItemLink = C_Item.GetItemLink(mixin)
-    local itemIlvl = C_Item.GetCurrentItemLevel(mixin)
+    local itemItemLink = GetItemLink(mixin)
+    local itemIlvl = GetCurrentItemLevel(mixin)
     local itemEquipLoc = select(9, GetItemInfo(itemItemLink))
     local equipSlot = itemEquipLocToEquipSlot[itemEquipLoc]
     if type(equipSlot) == "number" then
@@ -85,7 +90,7 @@ local isUpgrade = function(bagID, slotIndex)
         if equipLink == nil then
             return true, equipSlot
         else
-            local equipIlvl = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot)) + bonusIlvlEquivalent(equipLink)
+            local equipIlvl = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot)) + bonusIlvlEquivalent(equipLink)
             if itemIlvl - equipIlvl > 0 then
                 return true, equipSlot
             end
@@ -98,8 +103,8 @@ local isUpgrade = function(bagID, slotIndex)
         elseif equipLink2 == nil then
             return true, equipSlot[2]
         else
-            local equipIlvl1 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1])) + bonusIlvlEquivalent(equipLink1)
-            local equipIlvl2 = C_Item.GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2])) + bonusIlvlEquivalent(equipLink2)
+            local equipIlvl1 = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1])) + bonusIlvlEquivalent(equipLink1)
+            local equipIlvl2 = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2])) + bonusIlvlEquivalent(equipLink2)
             if equipIlvl1 > equipIlvl2 then
                 if itemIlvl - equipIlvl2 > 0 then
                     return true, equipSlot[2]
@@ -115,23 +120,23 @@ local isUpgrade = function(bagID, slotIndex)
 end
 
 local questLootReceivedTime, questLootItemLinks
-addonTable.QuestRewardEquipAutomation_OnQuestLootReceived = function(_, link)
+function addonTable.QuestRewardEquipAutomation_OnQuestLootReceived(_, link)
     if isBoPEquipableSpecItem(link) then
-        addonTable.debugPrint("is BOP")
+        debugPrint("is BOP")
         questLootReceivedTime = GetTime()
-        table.insert(questLootItemLinks, link)
+        tinsert(questLootItemLinks, link)
     end
 end
 
-addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged = function(equipmentSlotIndex)
+function addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged(equipmentSlotIndex)
     if #questLootItemLinks > 0 then
         local itemLoc = ItemLocation:CreateFromEquipmentSlot(equipmentSlotIndex)
         if itemLoc:IsValid() then
-            local equippedItemName = C_Item.GetItemName(ItemLocation:CreateFromEquipmentSlot(equipmentSlotIndex))
-            addonTable.debugPrint(equippedItemName.." equipped") 
+            local equippedItemName = GetItemName(ItemLocation:CreateFromEquipmentSlot(equipmentSlotIndex))
+            debugPrint(equippedItemName.." equipped") 
             for i, v in ipairs(questLootItemLinks) do
                 if equippedItemName == GetItemInfo(v) then
-                    table.remove(questLootItemLinks, i)
+                    tremove(questLootItemLinks, i)
                 end
             end
             if #questLootItemLinks == 0 then
@@ -141,20 +146,20 @@ addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged = function(equipm
     end
 end
 
-local onUpdate = function()
+local function onUpdate()
     if #questLootItemLinks > 0 and GetTime() - questLootReceivedTime > 1 and not InCombatLockdown() then
         questLootReceivedTime = GetTime()
         local bagID, slotIndex = getBagAndSlot(GetItemInfo(questLootItemLinks[#questLootItemLinks]))
         -- Can only identify if it is an upgrade if it is found in bag
-        addonTable.debugPrint("looking for item")
+        debugPrint("looking for item")
         if bagID and slotIndex then
             local upgrade, slotID = isUpgrade(bagID, slotIndex)
             if upgrade then
-                addonTable.debugPrint("is upgrade. attempting to equip.")
+                debugPrint("is upgrade. attempting to equip.")
                 EquipItemByName(questLootItemLinks[#questLootItemLinks], slotID)
             else
-                addonTable.debugPrint("not an upgrade.")
-                table.remove(questLootItemLinks)
+                debugPrint("not an upgrade.")
+                tremove(questLootItemLinks)
                 if #questLootItemLinks == 0 then
                     questLootReceivedTime = nil
                 end
@@ -163,12 +168,12 @@ local onUpdate = function()
     end
 end
 
-local initialize = function()
+local function initialize()
     questLootItemLinks = {}
     questLootReceivedTime = nil
 end
 
-local terminate = function()
+local function terminate()
     questLootItemLinks = {}
     questLootReceivedTime = nil
 end
