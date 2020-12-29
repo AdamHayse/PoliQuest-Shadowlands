@@ -13,7 +13,8 @@ local featureNames = {
     "SkipCutscenes",
     "MailboxAutomation",
     "QuestProgressTracker",
-    "AutoTrackQuests"
+    "AutoTrackQuests",
+    "QuestSharingAutomation"
 }
 
 local function PoliQuest_OnAddonLoaded(addonName)
@@ -57,6 +58,9 @@ local function PoliQuest_OnAddonLoaded(addonName)
             enabled = true
         }
         PoliSavedVars.AutoTrackQuests = PoliSavedVars.AutoTrackQuests or {
+            enabled = true
+        }
+        PoliSavedVars.QuestSharingAutomation = PoliSavedVars.QuestSharingAutomation or {
             enabled = true
         }
         for _, featureName in ipairs(featureNames) do
@@ -119,7 +123,8 @@ local constantEventHandlers = {
     QUEST_ACCEPTED = {
         addonTable.AutoTrackQuests_OnQuestAccepted,
         addonTable.DialogInteractionAutomation_OnQuestAccepted,
-        addonTable.QuestInteractionAutomation_OnQuestAccepted
+        addonTable.QuestInteractionAutomation_OnQuestAccepted,
+        addonTable.QuestSharingAutomation_OnQuestAccepted
     },
     QUEST_REMOVED = {
         addonTable.QuestProgressTracker_OnQuestRemoved
@@ -150,6 +155,18 @@ local constantEventHandlers = {
     },
     MAIL_SHOW = {
         addonTable.MailboxAutomation_OnMailShow
+    },
+    GROUP_JOINED = {
+        addonTable.QuestSharingAutomation_OnGroupJoined
+    },
+    GROUP_LEFT = {
+        addonTable.QuestSharingAutomation_OnGroupLeft
+    },
+    GROUP_ROSTER_UPDATE = {
+        addonTable.QuestSharingAutomation_OnGroupRosterUpdate
+    },
+    CHAT_MSG_SYSTEM = {
+        addonTable.QuestSharingAutomation_OnChatMsgSystem
     },
 }
 

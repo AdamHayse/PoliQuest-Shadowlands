@@ -9,6 +9,7 @@
     <Script file="features\automation\EmotesHandler.lua"/>
     <Script file="features\automation\RewardsHandler.lua"/>
     <Script file="features\automation\QuestTrackingHandler.lua"/>
+    <Script file="features\automation\QuestSharingHandler.lua"/>
     
     <Script file="features\speed\HearthstoneHandler.lua"/>
     <Script file="features\speed\MailboxHandler.lua"/>

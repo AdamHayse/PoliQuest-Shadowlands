@@ -157,6 +157,12 @@ local function drawAutomationTab(container)
     AutoTrackQuestsCheckButton:SetValue(PoliSavedVars.AutoTrackQuests.enabled)
     AutoTrackQuestsCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("AutoTrackQuests", key) end)
     container:AddChild(AutoTrackQuestsCheckButton)
+
+    local QuestSharingAutomationCheckButton = AceGUI:Create("CheckBox")
+    QuestSharingAutomationCheckButton:SetLabel("Automatically Share Zone Dailies")
+    QuestSharingAutomationCheckButton:SetValue(PoliSavedVars.QuestSharingAutomation.enabled)
+    QuestSharingAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestSharingAutomation", key) end)
+    container:AddChild(QuestSharingAutomationCheckButton)
     
     if InCombatLockdown() then
         updateCheckBoxEnabledStatus(container, true)
