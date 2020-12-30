@@ -164,7 +164,7 @@ local function onUpdate()
         debugPrint("check was buffered. " .. "sharedWithCount: " .. sharedWithCount .. " responseCount: " .. responseCount)
         if sharedWithCount == responseCount then
             debugPrint("cleaning up directly after message check buffer")
-            cleanup()
+            cleanUp()
         else
             debugPrint("set msgCheckBuffer to nil")
             autoShareInProgress = true
