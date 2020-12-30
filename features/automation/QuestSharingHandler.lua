@@ -2,7 +2,7 @@ local _, addonTable = ...
 
 local IsInGroup, GetNumGroupMembers, IsPushableQuest, LE_PARTY_CATEGORY_HOME = IsInGroup, GetNumGroupMembers, C_QuestLog.IsPushableQuest, LE_PARTY_CATEGORY_HOME
 local GetInfo, GetLogIndexForQuestID, SetSelectedQuest, QuestLogPushQuest = C_QuestLog.GetInfo, C_QuestLog.GetLogIndexForQuestID, C_QuestLog.SetSelectedQuest, QuestLogPushQuest
-local GetZoneText, GetNumQuestLogEntries = GetZoneText, C_QuestLog.GetNumQuestLogEntries
+local GetZoneText, GetNumQuestLogEntries, IsInRaid = GetZoneText, C_QuestLog.GetNumQuestLogEntries, IsInRaid
 local tinsert, tremove, GetTime = table.insert, table.remove, GetTime
 
 local function debugPrint(text)
@@ -16,7 +16,7 @@ local sharedWithCount, responseCount = 0, 0
 local shareQueue
 function addonTable.QuestSharingAutomation_OnQuestAccepted(questID)
     debugPrint("Accepted quest: "..questID)
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 and IsPushableQuest(questID) then
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 and IsPushableQuest(questID) then
         debugPrint("in party and have party members and quest is pushable")
         local questInfo = GetInfo(GetLogIndexForQuestID(questID))
         debugPrint("quest frequency: "..questInfo.frequency .. " quest level: "..questInfo.level)
@@ -94,7 +94,7 @@ end
 
 function addonTable.QuestSharingAutomation_OnGroupJoined()
     numPartyMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) and numPartyMembers > 1 then
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and numPartyMembers > 1 then
         addZoneDailiesToQueue()
     end
 end
@@ -107,7 +107,7 @@ end
 function addonTable.QuestSharingAutomation_OnGroupRosterUpdate()
     local currentNumPartyMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
     if (numPartyMembers or 0) < currentNumPartyMembers then 
-        if IsInGroup(LE_PARTY_CATEGORY_HOME) and currentNumPartyMembers > 1 then
+        if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and currentNumPartyMembers > 1 then
             addZoneDailiesToQueue()
         end
     end
