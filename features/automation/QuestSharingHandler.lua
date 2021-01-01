@@ -2,7 +2,7 @@ local _, addonTable = ...
 
 local IsInGroup, GetNumGroupMembers, IsPushableQuest, LE_PARTY_CATEGORY_HOME = IsInGroup, GetNumGroupMembers, C_QuestLog.IsPushableQuest, LE_PARTY_CATEGORY_HOME
 local GetInfo, GetLogIndexForQuestID, SetSelectedQuest, QuestLogPushQuest = C_QuestLog.GetInfo, C_QuestLog.GetLogIndexForQuestID, C_QuestLog.SetSelectedQuest, QuestLogPushQuest
-local GetZoneText, GetNumQuestLogEntries, IsInRaid = GetZoneText, C_QuestLog.GetNumQuestLogEntries, IsInRaid
+local GetZoneText, GetNumQuestLogEntries, IsInRaid, SendChatMessage = GetZoneText, C_QuestLog.GetNumQuestLogEntries, IsInRaid, SendChatMessage
 local tinsert, tremove, GetTime = table.insert, table.remove, GetTime
 
 local function debugPrint(text)
@@ -70,6 +70,7 @@ end
 local function addZoneDailiesToQueue()
     local dailies = fetchZoneDailies()
     if dailies and #dailies > 0 then
+        SendChatMessage("[PoliQuest] Sharing " .. GetZoneText() .. " dailies...", "PARTY")
         for i=1, #dailies do
             local j = 1
             local exists = false
