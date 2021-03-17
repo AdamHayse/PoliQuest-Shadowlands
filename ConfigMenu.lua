@@ -74,30 +74,52 @@ local function updateCheckBoxEnabledStatus(container, childrenDisabled)
     local children = container.children or container:GetUserData("children") or {}
     for _, child in ipairs(children) do
         child:SetDisabled(childrenDisabled)
-        if not child:GetValue() or childrenDisabled then
+        if (child.GetValue and not child:GetValue() or child.GetText and not child:GetText()) or childrenDisabled then
                 updateCheckBoxEnabledStatus(child, true)
         end
     end
 end
 
+local function createMenuElement(container, elementType, label, featureName, switchName, value, child, children)
+    local element = AceGUI:Create(elementType)
+    element:SetLabel(label)
+    local callback
+    if switchName == nil then
+        callback = function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration(featureName, key) end
+    else
+        callback = function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureSwitch(featureName, switchName, key) end
+    end
+    if elementType == "CheckBox" then
+        element:SetValue(value)
+        element:SetCallback("OnValueChanged", callback)
+    elseif elementType == "EditBox" then
+        element:SetText(value)
+        element:SetCallback("OnEnterPressed", callback)
+    elseif elementType == "Dropdown" then
+        element:SetList({ Pawn = "Pawn", Dumb = "Dumb"})
+        element:SetValue(value)
+        element:SetItemDisabled("Pawn", not addonTable.PawnLoaded)
+        element:SetCallback("OnValueChanged", callback)
+    end
+    if child then
+        element:SetUserData("child", true)
+    end
+    if children then
+        element:SetUserData("children", children)
+    end
+    return element
+end
+
 local function drawGeneralTab(container)
     container:PauseLayout()
-    local QuestItemButtonCheckButton = AceGUI:Create("CheckBox")
-    QuestItemButtonCheckButton:SetLabel("Quest Item Button")
-    QuestItemButtonCheckButton:SetValue(PoliSavedVars.QuestItemButton.enabled)
-    QuestItemButtonCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestItemButton", key) end)
+
+    local QuestItemButtonCheckButton = createMenuElement(container, "CheckBox", "Quest Item Button", "QuestItemButton", nil, PoliSavedVars.QuestItemButton.enabled, nil, nil)
     container:AddChild(QuestItemButtonCheckButton)
     
-    local SkipCutscenesCheckButton = AceGUI:Create("CheckBox")
-    SkipCutscenesCheckButton:SetLabel("Skip Cutscenes")
-    SkipCutscenesCheckButton:SetValue(PoliSavedVars.SkipCutscenes.enabled)
-    SkipCutscenesCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("SkipCutscenes", key) end)
+    local SkipCutscenesCheckButton = createMenuElement(container, "CheckBox", "Skip Cutscenes", "SkipCutscenes", nil, PoliSavedVars.SkipCutscenes.enabled, nil, nil)
     container:AddChild(SkipCutscenesCheckButton)
 
-    local QuestProgressTrackerCheckButton = AceGUI:Create("CheckBox")
-    QuestProgressTrackerCheckButton:SetLabel("Quest Progress Tracking")
-    QuestProgressTrackerCheckButton:SetValue(PoliSavedVars.QuestProgressTracker.enabled)
-    QuestProgressTrackerCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestProgressTracker", key) end)
+    local QuestProgressTrackerCheckButton = createMenuElement(container, "CheckBox", "Quest Progress Tracking", "QuestProgressTracker", nil, PoliSavedVars.QuestProgressTracker.enabled, nil, nil)
     container:AddChild(QuestProgressTrackerCheckButton)
     
     if InCombatLockdown() then
@@ -112,56 +134,32 @@ end
 
 local function drawAutomationTab(container)
     container:PauseLayout()
-    local StrictAutomationCheckButton = AceGUI:Create("CheckBox")
-    StrictAutomationCheckButton:SetLabel("Strict Automation")
-    StrictAutomationCheckButton:SetValue(PoliSavedVars.QuestInteractionAutomation.switches.StrictAutomation)
-    StrictAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureSwitch("QuestInteractionAutomation", "StrictAutomation", key) end)
-    StrictAutomationCheckButton:SetUserData("child", true)
-    container:AddChild(StrictAutomationCheckButton)
 
-    local QuestRewardSelectionAutomationCheckButton = AceGUI:Create("CheckBox")
-    QuestRewardSelectionAutomationCheckButton:SetLabel("Quest Reward Selection Automation")
-    QuestRewardSelectionAutomationCheckButton:SetValue(PoliSavedVars.QuestInteractionAutomation.switches.QuestRewardSelectionAutomation)
-    QuestRewardSelectionAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureSwitch("QuestInteractionAutomation", "QuestRewardSelectionAutomation", key) end)
-    QuestRewardSelectionAutomationCheckButton:SetUserData("children", { StrictAutomationCheckButton })
-    QuestRewardSelectionAutomationCheckButton:SetUserData("child", true)
+    local IlvlThreshHoldEditBox = createMenuElement(container, "EditBox", "Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold, true, nil)
+    container:AddChild(IlvlThreshHoldEditBox)
+
+    local RewardSelectionLogicDropdown = createMenuElement(container, "Dropdown", "Reward Selection Logic", "QuestRewardSelectionAutomation", "SelectionLogic", PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic, true, nil)
+    container:AddChild(RewardSelectionLogicDropdown)
+
+    local QuestRewardSelectionAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Reward Selection Automation", "QuestRewardSelectionAutomation", nil, PoliSavedVars.QuestRewardSelectionAutomation.enabled, nil, { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown })
     container:AddChild(QuestRewardSelectionAutomationCheckButton)
 
-    local QuestInteractionAutomationCheckButton = AceGUI:Create("CheckBox")
-    QuestInteractionAutomationCheckButton:SetLabel("Quest Interaction Automation")
-    QuestInteractionAutomationCheckButton:SetValue(PoliSavedVars.QuestInteractionAutomation.enabled)
-    QuestInteractionAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestInteractionAutomation", key) end)
-    QuestInteractionAutomationCheckButton:SetUserData("children", { QuestRewardSelectionAutomationCheckButton })
+    local QuestInteractionAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Interaction Automation", "QuestInteractionAutomation", nil, PoliSavedVars.QuestInteractionAutomation.enabled, nil, nil)
     container:AddChild(QuestInteractionAutomationCheckButton)
 
-    local DialogInteractionAutomationCheckButton = AceGUI:Create("CheckBox")
-    DialogInteractionAutomationCheckButton:SetLabel("Dialog Interaction Automation")
-    DialogInteractionAutomationCheckButton:SetValue(PoliSavedVars.DialogInteractionAutomation.enabled)
-    DialogInteractionAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("DialogInteractionAutomation", key) end)
+    local DialogInteractionAutomationCheckButton = createMenuElement(container, "CheckBox", "Dialog Interaction Automation", "DialogInteractionAutomation", nil, PoliSavedVars.DialogInteractionAutomation.enabled, nil, nil)
     container:AddChild(DialogInteractionAutomationCheckButton)
 
-    local QuestRewardEquipAutomationCheckButton = AceGUI:Create("CheckBox")
-    QuestRewardEquipAutomationCheckButton:SetLabel("Quest Reward Equip Automation")
-    QuestRewardEquipAutomationCheckButton:SetValue(PoliSavedVars.QuestRewardEquipAutomation.enabled)
-    QuestRewardEquipAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestRewardEquipAutomation", key) end)
+    local QuestRewardEquipAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Reward Equip Automation", "QuestRewardEquipAutomation", nil, PoliSavedVars.QuestRewardEquipAutomation.enabled, nil, nil)
     container:AddChild(QuestRewardEquipAutomationCheckButton)
 
-    local QuestEmoteAutomationCheckButton = AceGUI:Create("CheckBox")
-    QuestEmoteAutomationCheckButton:SetLabel("Quest Emote Automation")
-    QuestEmoteAutomationCheckButton:SetValue(PoliSavedVars.QuestEmoteAutomation.enabled)
-    QuestEmoteAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestEmoteAutomation", key) end)
+    local QuestEmoteAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Emote Automation", "QuestEmoteAutomation", nil, PoliSavedVars.QuestEmoteAutomation.enabled, nil, nil)
     container:AddChild(QuestEmoteAutomationCheckButton)
 
-    local AutoTrackQuestsCheckButton = AceGUI:Create("CheckBox")
-    AutoTrackQuestsCheckButton:SetLabel("Automatically Track Quests")
-    AutoTrackQuestsCheckButton:SetValue(PoliSavedVars.AutoTrackQuests.enabled)
-    AutoTrackQuestsCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("AutoTrackQuests", key) end)
+    local AutoTrackQuestsCheckButton = createMenuElement(container, "CheckBox", "Automatically Track Quests", "AutoTrackQuests", nil, PoliSavedVars.AutoTrackQuests.enabled, nil, nil)
     container:AddChild(AutoTrackQuestsCheckButton)
 
-    local QuestSharingAutomationCheckButton = AceGUI:Create("CheckBox")
-    QuestSharingAutomationCheckButton:SetLabel("Automatically Share Zone Dailies")
-    QuestSharingAutomationCheckButton:SetValue(PoliSavedVars.QuestSharingAutomation.enabled)
-    QuestSharingAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("QuestSharingAutomation", key) end)
+    local QuestSharingAutomationCheckButton = createMenuElement(container, "CheckBox", "Automatically Share Zone Dailies", "QuestSharingAutomation", nil, PoliSavedVars.QuestSharingAutomation.enabled, nil, nil)
     container:AddChild(QuestSharingAutomationCheckButton)
     
     if InCombatLockdown() then
@@ -176,16 +174,11 @@ end
 
 local function drawSpeedLevelingTab(container)
     container:PauseLayout()
-    local HearthstoneAutomationCheckButton = AceGUI:Create("CheckBox")
-    HearthstoneAutomationCheckButton:SetLabel("Hearthstone Automation")
-    HearthstoneAutomationCheckButton:SetValue(PoliSavedVars.HearthstoneAutomation.enabled)
-    HearthstoneAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("HearthstoneAutomation", key) end)
+
+    local HearthstoneAutomationCheckButton = createMenuElement(container, "CheckBox", "Hearthstone Automation", "HearthstoneAutomation", nil, PoliSavedVars.HearthstoneAutomation.enabled, nil, nil)
     container:AddChild(HearthstoneAutomationCheckButton)
     
-    local MailboxAutomationCheckButton = AceGUI:Create("CheckBox")
-    MailboxAutomationCheckButton:SetLabel("Auto-retrieve Radinax Gems")
-    MailboxAutomationCheckButton:SetValue(PoliSavedVars.MailboxAutomation.enabled)
-    MailboxAutomationCheckButton:SetCallback("OnValueChanged", function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration("MailboxAutomation", key) end)
+    local MailboxAutomationCheckButton = createMenuElement(container, "CheckBox", "Auto-retrieve Radinax Gems", "MailboxAutomation", nil, PoliSavedVars.MailboxAutomation.enabled, nil, nil)
     container:AddChild(MailboxAutomationCheckButton)
     
     if InCombatLockdown() then

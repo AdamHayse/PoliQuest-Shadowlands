@@ -5,6 +5,7 @@
     <Script file="features\general\QuestProgressHandler.lua"/>
     
     <Script file="features\automation\QuestInteractionHandler.lua"/>
+    <Script file="features\automation\RewardSelectionHandler.lua"/>
     <Script file="features\automation\DialogInteractionHandler.lua"/>
     <Script file="features\automation\EmotesHandler.lua"/>
     <Script file="features\automation\RewardsHandler.lua"/>

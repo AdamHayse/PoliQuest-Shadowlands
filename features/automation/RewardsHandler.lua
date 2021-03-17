@@ -16,10 +16,8 @@ local function debugPrint(text)
     end
 end
 
-local scanningTooltip = CreateFrame("GameTooltip", "PoliScanningTooltip", nil, "GameTooltipTemplate")
-scanningTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-
 local function isBoP(itemLink)
+    local scanningTooltip = addonTable.tooltip
     scanningTooltip:ClearLines()
     scanningTooltip:SetHyperlink(itemLink)
     for i=1, scanningTooltip:NumLines() do
@@ -84,34 +82,34 @@ local function isUpgrade(bagID, slotIndex)
     local itemItemLink = GetItemLink(mixin)
     local itemIlvl = GetCurrentItemLevel(mixin)
     local itemEquipLoc = select(9, GetItemInfo(itemItemLink))
-    local equipSlot = itemEquipLocToEquipSlot[itemEquipLoc]
-    if type(equipSlot) == "number" then
-        local equipLink = GetInventoryItemLink("player", equipSlot)
+    local equipSlots = itemEquipLocToEquipSlot[itemEquipLoc]
+    if #equipSlots == 1 then
+        local equipLink = GetInventoryItemLink("player", equipSlots[1])
         if equipLink == nil then
-            return true, equipSlot
+            return true, equipSlots[1]
         else
-            local equipIlvl = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot)) + bonusIlvlEquivalent(equipLink)
+            local equipIlvl = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlots[1])) + bonusIlvlEquivalent(equipLink)
             if itemIlvl - equipIlvl > 0 then
-                return true, equipSlot
+                return true, equipSlots[1]
             end
         end
     else
-        local equipLink1 = GetInventoryItemLink("player", equipSlot[1])
-        local equipLink2 = GetInventoryItemLink("player", equipSlot[2])
+        local equipLink1 = GetInventoryItemLink("player", equipSlots[1])
+        local equipLink2 = GetInventoryItemLink("player", equipSlots[2])
         if equipLink1 == nil then
-            return true, equipSlot[1]
+            return true, equipSlots[1]
         elseif equipLink2 == nil then
-            return true, equipSlot[2]
+            return true, equipSlots[2]
         else
-            local equipIlvl1 = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[1])) + bonusIlvlEquivalent(equipLink1)
-            local equipIlvl2 = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlot[2])) + bonusIlvlEquivalent(equipLink2)
+            local equipIlvl1 = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlots[1])) + bonusIlvlEquivalent(equipLink1)
+            local equipIlvl2 = GetCurrentItemLevel(ItemLocation:CreateFromEquipmentSlot(equipSlots[2])) + bonusIlvlEquivalent(equipLink2)
             if equipIlvl1 > equipIlvl2 then
                 if itemIlvl - equipIlvl2 > 0 then
-                    return true, equipSlot[2]
+                    return true, equipSlots[2]
                 end
             else
                 if itemIlvl - equipIlvl1 > 0 then
-                    return true, equipSlot[1]
+                    return true, equipSlots[1]
                 end
             end
         end

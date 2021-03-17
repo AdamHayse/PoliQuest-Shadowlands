@@ -14,55 +14,86 @@ local featureNames = {
     "MailboxAutomation",
     "QuestProgressTracker",
     "AutoTrackQuests",
-    "QuestSharingAutomation"
+    "QuestSharingAutomation",
+    "QuestRewardSelectionAutomation"
 }
+
+local function ternaryExpression(condition, a, b)
+    if condition then
+        return a
+    else
+        return b
+    end
+end
 
 local function PoliQuest_OnAddonLoaded(addonName)
     if addonName == "PoliQuest" then
+        addonTable.PawnLoaded = IsAddOnLoaded("Pawn")
         PoliSavedVars = PoliSavedVars or {}
+        local savedVars = {}
+
         if PoliSavedVars.QuestItemButton == nil then
-            PoliSavedVars.QuestItemButton = {
-                enabled = true,
-                xOffset = 0,
-                yOffset = 0,
-                relPoint = "CENTER",
-            }
             addonTable.QuestItemButton.Button:unlock()
+        else
+            addonTable.QuestItemButton.Button:lock()
         end
-        PoliSavedVars.QuestInteractionAutomation = PoliSavedVars.QuestInteractionAutomation or {
-            enabled = true,
-            switches = {
-                QuestRewardSelectionAutomation = true,
-                StrictAutomation = false,
-            }
-        }
-        PoliSavedVars.DialogInteractionAutomation = PoliSavedVars.DialogInteractionAutomation or {
-            enabled = true
-        }
-        PoliSavedVars.HearthstoneAutomation = PoliSavedVars.HearthstoneAutomation or {
-            enabled = false
-        }
-        PoliSavedVars.QuestRewardEquipAutomation = PoliSavedVars.QuestRewardEquipAutomation or {
-            enabled = true
-        }
-        PoliSavedVars.QuestEmoteAutomation = PoliSavedVars.QuestEmoteAutomation or {
-            enabled = true
-        }
-        PoliSavedVars.SkipCutscenes = PoliSavedVars.SkipCutscenes or {
-            enabled = true
-        }
-        PoliSavedVars.MailboxAutomation = PoliSavedVars.MailboxAutomation or {
-            enabled = true
-        }
-        PoliSavedVars.QuestProgressTracker = PoliSavedVars.QuestProgressTracker or {
-            enabled = true
-        }
-        PoliSavedVars.AutoTrackQuests = PoliSavedVars.AutoTrackQuests or {
-            enabled = true
-        }
-        PoliSavedVars.QuestSharingAutomation = PoliSavedVars.QuestSharingAutomation or {
-            enabled = true
-        }
+        PoliSavedVars.QuestItemButton = PoliSavedVars.QuestItemButton or {}
+        savedVars.QuestItemButton = PoliSavedVars.QuestItemButton and {}
+        savedVars.QuestItemButton.enabled = ternaryExpression(type(PoliSavedVars.QuestItemButton.enabled) == "boolean", PoliSavedVars.QuestItemButton.enabled, true)
+        savedVars.QuestItemButton.xOffset = ternaryExpression(type(PoliSavedVars.QuestItemButton.xOffset) == "number", PoliSavedVars.QuestItemButton.xOffset, 0)
+        savedVars.QuestItemButton.yOffset = ternaryExpression(type(PoliSavedVars.QuestItemButton.yOffset) == "number", PoliSavedVars.QuestItemButton.yOffset, 0)
+        savedVars.QuestItemButton.relPoint = ternaryExpression(type(PoliSavedVars.QuestItemButton.relPoint) == "string", PoliSavedVars.QuestItemButton.relPoint, "CENTER")
+
+        PoliSavedVars.QuestInteractionAutomation = PoliSavedVars.QuestInteractionAutomation or {}
+        savedVars.QuestInteractionAutomation = {}
+        savedVars.QuestInteractionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.enabled) == "boolean", PoliSavedVars.QuestInteractionAutomation.enabled, true)
+
+        PoliSavedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
+        savedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
+        savedVars.QuestRewardSelectionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.enabled) == "boolean", PoliSavedVars.QuestRewardSelectionAutomation.enabled, true)
+        PoliSavedVars.QuestRewardSelectionAutomation.switches = PoliSavedVars.QuestRewardSelectionAutomation.switches or {}
+        savedVars.QuestRewardSelectionAutomation.switches = {}
+        savedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold) == "number", PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold, 171)
+        savedVars.QuestRewardSelectionAutomation.switches.SelectionLogic = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic) == "string" and addonTable.PawnLoaded, PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic, "Dumb")
+
+        PoliSavedVars.DialogInteractionAutomation = PoliSavedVars.DialogInteractionAutomation or {}
+        savedVars.DialogInteractionAutomation = {}
+        savedVars.DialogInteractionAutomation.enabled = ternaryExpression(type(PoliSavedVars.DialogInteractionAutomation.enabled) == "boolean", PoliSavedVars.DialogInteractionAutomation.enabled, true)
+
+        PoliSavedVars.HearthstoneAutomation = PoliSavedVars.HearthstoneAutomation or {}
+        savedVars.HearthstoneAutomation = {}
+        savedVars.HearthstoneAutomation.enabled = ternaryExpression(type(PoliSavedVars.HearthstoneAutomation.enabled) == "boolean", PoliSavedVars.HearthstoneAutomation.enabled, false)
+
+        PoliSavedVars.QuestRewardEquipAutomation = PoliSavedVars.QuestRewardEquipAutomation or {}
+        savedVars.QuestRewardEquipAutomation = {}
+        savedVars.QuestRewardEquipAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.enabled) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.enabled, true)
+
+        PoliSavedVars.QuestEmoteAutomation = PoliSavedVars.QuestEmoteAutomation or {}
+        savedVars.QuestEmoteAutomation = {}
+        savedVars.QuestEmoteAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestEmoteAutomation.enabled) == "boolean", PoliSavedVars.QuestEmoteAutomation.enabled, true)
+
+        PoliSavedVars.SkipCutscenes = PoliSavedVars.SkipCutscenes or {}
+        savedVars.SkipCutscenes = {}
+        savedVars.SkipCutscenes.enabled = ternaryExpression(type(PoliSavedVars.SkipCutscenes.enabled) == "boolean", PoliSavedVars.SkipCutscenes.enabled, true)
+
+        PoliSavedVars.MailboxAutomation = PoliSavedVars.MailboxAutomation or {}
+        savedVars.MailboxAutomation = {}
+        savedVars.MailboxAutomation.enabled = ternaryExpression(type(PoliSavedVars.MailboxAutomation.enabled) == "boolean", PoliSavedVars.MailboxAutomation.enabled, false)
+
+        PoliSavedVars.QuestProgressTracker = PoliSavedVars.QuestProgressTracker or {}
+        savedVars.QuestProgressTracker = {}
+        savedVars.QuestProgressTracker.enabled = ternaryExpression(type(PoliSavedVars.QuestProgressTracker.enabled) == "boolean", PoliSavedVars.QuestProgressTracker.enabled, true)
+
+        PoliSavedVars.AutoTrackQuests = PoliSavedVars.AutoTrackQuests or {}
+        savedVars.AutoTrackQuests = {}
+        savedVars.AutoTrackQuests.enabled = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.enabled) == "boolean", PoliSavedVars.AutoTrackQuests.enabled, true)
+        
+        PoliSavedVars.QuestSharingAutomation = PoliSavedVars.QuestSharingAutomation or {}
+        savedVars.QuestSharingAutomation = {}
+        savedVars.QuestSharingAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestSharingAutomation.enabled) == "boolean", PoliSavedVars.QuestSharingAutomation.enabled, true)
+        
+        PoliSavedVars = savedVars
+
         for _, featureName in ipairs(featureNames) do
             addonTable.updateFeatureConfiguration(featureName, PoliSavedVars[featureName].enabled)
             local switches = PoliSavedVars[featureName].switches
@@ -114,7 +145,8 @@ local constantEventHandlers = {
         addonTable.QuestInteractionAutomation_OnQuestProgress
     },
     QUEST_COMPLETE = {
-        addonTable.QuestInteractionAutomation_OnQuestComplete
+        addonTable.QuestInteractionAutomation_OnQuestComplete,
+        addonTable.QuestRewardSelectionAutomation_OnQuestComplete
     },
     QUEST_LOG_UPDATE = {
         addonTable.QuestInteractionAutomation_OnQuestLogUpdate,
@@ -298,6 +330,9 @@ addonTable.EventHandler = poliQuestEventHandler
 
 SLASH_PoliQuest1 = "/poliquest"
 SLASH_PoliQuest2 = "/pq"
+
+addonTable.tooltip = CreateFrame("GameTooltip", "PoliScanningTooltip", nil, "GameTooltipTemplate")
+addonTable.tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
 local configMenu
 SlashCmdList["PoliQuest"] = function(msg)
