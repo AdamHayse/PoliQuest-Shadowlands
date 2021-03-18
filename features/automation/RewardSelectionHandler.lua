@@ -393,18 +393,20 @@ local function calculatePotentialUpgradesPawn(questRewardInfo)
                 info.score = rewardScore - weakestPiecePawnScore
             else
                 debugPrint("Pawn failed to calculate item value for quest reward at index " .. info.index)
-                return
+                return false
             end
         end
+        return true
     end
 end
 
 local function upgradePostProcessing(questRewardInfo)
-    local maxScore, maxScoreIndex
-    for _, info in ipairs(questRewardInfo) do
-        if info.score > (maxScore or 0) then
-            maxScore = info.score
-            maxScoreIndex = info.index
+    local maxScore = questRewardInfo[1].score
+    local maxScoreIndex = questRewardInfo[1].info
+    for i=2,#questRewardInfo do
+        if questRewardInfo[i].score > maxScore then
+            maxScore = questRewardInfo[i].score
+            maxScoreIndex = questRewardInfo[i].index
         end
     end
     return maxScoreIndex
