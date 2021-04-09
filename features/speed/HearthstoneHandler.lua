@@ -3,7 +3,23 @@ local _, addonTable = ...
 local UnitLevel, UnitName, GetOptions, GetNumOptions, SelectOption = UnitLevel, UnitName, C_GossipInfo.GetOptions, C_GossipInfo.GetNumOptions, C_GossipInfo.SelectOption
 local GossipFrameNpcNameText, StaticPopup1Button1 = GossipFrameNpcNameText, StaticPopup1Button1
 
-local innWhitelist = addonTable.innWhitelist
+local innWhitelist = addonTable.data.innWhitelist
+
+local feature = {}
+
+local DEBUG_HEARTHSTONE_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_HEARTHSTONE_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_HEARTHSTONE_HANDLER
+end
+
+local function debugPrint(text)
+    if DEBUG_HEARTHSTONE_HANDLER then
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+    end
+end
 
 local function onConfirmBinder()
     if UnitLevel("player") < 60 then
@@ -15,7 +31,9 @@ local function onConfirmBinder()
     end
 end
 
-function addonTable.HearthstoneAutomation_OnGossipShow()
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onGossipShow()
     if innWhitelist[GossipFrameNpcNameText:GetText()] then
         local gossipOptions = GetOptions()
         local numOptions = GetNumOptions()
@@ -28,9 +46,9 @@ function addonTable.HearthstoneAutomation_OnGossipShow()
     end
 end
 
-addonTable.HearthstoneAutomation_OnConfirmBinder = onConfirmBinder
+feature.eventHandlers.onConfirmBinder = onConfirmBinder
 
-addonTable.HearthstoneAutomation_OnGossipClosed = onConfirmBinder
+feature.eventHandlers.onGossipClosed = onConfirmBinder
 
 local function initialize()
 end
@@ -38,13 +56,7 @@ end
 local function terminate()
 end
 
-local hearthstoneAutomation = {}
-hearthstoneAutomation.name = "HearthstoneAutomation"
-hearthstoneAutomation.events = {
-    { "GOSSIP_SHOW" },
-    { "CONFIRM_BINDER" },
-    { "GOSSIP_CLOSED" }
-}
-hearthstoneAutomation.initialize = initialize
-hearthstoneAutomation.terminate = terminate
-addonTable[hearthstoneAutomation.name] = hearthstoneAutomation
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.HearthstoneAutomation = feature

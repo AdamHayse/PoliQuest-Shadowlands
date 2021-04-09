@@ -2,6 +2,22 @@ local _, addonTable = ...
 
 local CinematicFrame, CinematicFrame_CancelCinematic, GameMovieFinished, StopCinematic = CinematicFrame, CinematicFrame_CancelCinematic, GameMovieFinished, StopCinematic
 
+local feature = {}
+
+local DEBUG_SKIP_CUTSCENES
+function feature.setDebug(enabled)
+    DEBUG_SKIP_CUTSCENES = enabled
+end
+function feature.isDebug()
+    return DEBUG_SKIP_CUTSCENES
+end
+
+local function debugPrint(text)
+    if DEBUG_SKIP_CUTSCENES then
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+    end
+end
+
 local featureEnabled
 CinematicFrame:HookScript("OnShow", function()
     if featureEnabled then
@@ -19,7 +35,9 @@ MovieFrame_PlayMovie = function(...)
     end
 end
 
-function addonTable.SkipCutscenes_OnPlayMovie()
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onPlayMovie()
     StopCinematic()
 end
 
@@ -31,11 +49,7 @@ local function terminate()
     featureEnabled = false
 end
 
-local skipCutscenes = {}
-skipCutscenes.name = "SkipCutscenes"
-skipCutscenes.events = {
-    { "PLAY_MOVIE" }
-}
-skipCutscenes.initialize = initialize
-skipCutscenes.terminate = terminate
-addonTable[skipCutscenes.name] = skipCutscenes
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.SkipCutscenes = feature

@@ -5,30 +5,25 @@ local GetInfo, GetLogIndexForQuestID, SetSelectedQuest, QuestLogPushQuest = C_Qu
 local GetZoneText, GetNumQuestLogEntries, IsInRaid, SendChatMessage = GetZoneText, C_QuestLog.GetNumQuestLogEntries, IsInRaid, SendChatMessage
 local tinsert, tremove, GetTime = table.insert, table.remove, GetTime
 
+local feature = {}
+
+local DEBUG_QUEST_SHARING_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_QUEST_SHARING_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_QUEST_SHARING_HANDLER
+end
+
 local function debugPrint(text)
     if DEBUG_QUEST_SHARING_HANDLER then
-        print("|cFF5c8cc1PoliQuest:|r " .. text)
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
     end
 end
 
 local pendingShare, awaitingResponses, autoShareInProgress, msgCheckBuffer, numPartyMembers, shareTime
 local sharedWithCount, responseCount = 0, 0
 local shareQueue
-function addonTable.QuestSharingAutomation_OnQuestAccepted(questID)
-    debugPrint("Accepted quest: "..questID)
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 and IsPushableQuest(questID) then
-        debugPrint("in party and have party members and quest is pushable")
-        local questInfo = GetInfo(GetLogIndexForQuestID(questID))
-        debugPrint("quest frequency: "..questInfo.frequency .. " quest level: "..questInfo.level)
-        if questInfo.frequency == 1 and questInfo.level == 60 then
-            tinsert(shareQueue, questID)
-            debugPrint("quest inserted into share queue. size: " .. #shareQueue)
-            pendingShare = true
-        end
-    else
-        debugPrint("Not in party or no party members or quest is not pushable")
-    end
-end
 
 local function abortAutoShare()
     debugPrint("aborted autoshare")
@@ -93,28 +88,6 @@ local function addZoneDailiesToQueue()
     end
 end
 
-function addonTable.QuestSharingAutomation_OnGroupJoined()
-    numPartyMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and numPartyMembers > 1 then
-        addZoneDailiesToQueue()
-    end
-end
-
-function addonTable.QuestSharingAutomation_OnGroupLeft()
-    debugPrint("aborting from GroupLeft handler")
-    abortAutoShare()
-end
-
-function addonTable.QuestSharingAutomation_OnGroupRosterUpdate()
-    local currentNumPartyMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
-    if (numPartyMembers or 0) < currentNumPartyMembers then 
-        if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and currentNumPartyMembers > 1 then
-            addZoneDailiesToQueue()
-        end
-    end
-    numPartyMembers = currentNumPartyMembers
-end
-
 local function cleanUp()
     debugPrint("cleaning up feature flags")
     sharedWithCount = 0
@@ -128,7 +101,47 @@ local function cleanUp()
     end
 end
 
-function addonTable.QuestSharingAutomation_OnChatMsgSystem(msg)
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onQuestAccepted(questID)
+    debugPrint("Accepted quest: "..questID)
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 and IsPushableQuest(questID) then
+        debugPrint("in party and have party members and quest is pushable")
+        local questInfo = GetInfo(GetLogIndexForQuestID(questID))
+        debugPrint("quest frequency: "..questInfo.frequency .. " quest level: "..questInfo.level)
+        if questInfo.frequency == 1 and questInfo.level == 60 then
+            tinsert(shareQueue, questID)
+            debugPrint("quest inserted into share queue. size: " .. #shareQueue)
+            pendingShare = true
+        end
+    else
+        debugPrint("Not in party or no party members or quest is not pushable")
+    end
+end
+
+function feature.eventHandlers.onGroupJoined()
+    numPartyMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and numPartyMembers > 1 then
+        addZoneDailiesToQueue()
+    end
+end
+
+function feature.eventHandlers.onGroupLeft()
+    debugPrint("aborting from GroupLeft handler")
+    abortAutoShare()
+end
+
+function feature.eventHandlers.onGroupRosterUpdate()
+    local currentNumPartyMembers = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
+    if (numPartyMembers or 0) < currentNumPartyMembers then 
+        if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and currentNumPartyMembers > 1 then
+            addZoneDailiesToQueue()
+        end
+    end
+    numPartyMembers = currentNumPartyMembers
+end
+
+function feature.eventHandlers.onChatMsgSystem(msg)
     if msg:find("Sharing quest with") then
         if autoShareInProgress then
             debugPrint("aborting from ChatMsgSystem handler")
@@ -190,16 +203,8 @@ local function terminate()
     shareQueue = nil
 end
 
-local questSharingAutomation = {}
-questSharingAutomation.name = "QuestSharingAutomation"
-questSharingAutomation.events = {
-    { "QUEST_ACCEPTED" },
-    { "GROUP_JOINED" },
-    { "GROUP_LEFT" },
-    { "GROUP_ROSTER_UPDATE" },
-    { "CHAT_MSG_SYSTEM" }
-}
-questSharingAutomation.onUpdate = onUpdate
-questSharingAutomation.initialize = initialize
-questSharingAutomation.terminate = terminate
-addonTable[questSharingAutomation.name] = questSharingAutomation
+feature.updateHandler = onUpdate
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.QuestSharingAutomation = feature

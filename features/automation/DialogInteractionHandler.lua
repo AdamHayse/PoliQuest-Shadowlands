@@ -3,14 +3,23 @@ local _, addonTable = ...
 local GetOptions, GetNumOptions, SelectOption, GetNumQuestLogEntries, GetInfo = C_GossipInfo.GetOptions, C_GossipInfo.GetNumOptions, C_GossipInfo.SelectOption, C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetInfo
 local ipairs, type = ipairs, type
 local GossipFrameNpcNameText, GossipFrame = GossipFrameNpcNameText, GossipFrame
-local dialogWhitelist = addonTable.dialogWhitelist
+local dialogWhitelist = addonTable.data.dialogWhitelist
+
+local feature = {}
+
+local DEBUG_DIALOG_INTERACTION_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_DIALOG_INTERACTION_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_DIALOG_INTERACTION_HANDLER
+end
 
 local function debugPrint(text)
     if DEBUG_DIALOG_INTERACTION_HANDLER then
-        print("|cFF5c8cc1PoliQuest:|r " .. text)
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
     end
 end
-
 
 local function searchDialogOptions(questDialog)
     local gossipOptions = GetOptions()
@@ -59,11 +68,13 @@ local function onGossipShow()
     end
 end
 
-function addonTable.DialogInteractionAutomation_OnGossipShow()
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onGossipShow()
     onGossipShow()
 end
 
-function addonTable.DialogInteractionAutomation_OnQuestAccepted(questID)
+function feature.eventHandlers.onQuestAccepted(questID)
     if GossipFrame:IsVisible() then
         onGossipShow()
     end
@@ -75,12 +86,7 @@ end
 local function terminate()
 end
 
-local dialogInteractionAutomation = {}
-dialogInteractionAutomation.name = "DialogInteractionAutomation"
-dialogInteractionAutomation.events = {
-    { "GOSSIP_SHOW" },
-    { "QUEST_ACCEPTED" }
-}
-dialogInteractionAutomation.initialize = initialize
-dialogInteractionAutomation.terminate = terminate
-addonTable[dialogInteractionAutomation.name] = dialogInteractionAutomation
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.DialogInteractionAutomation = feature

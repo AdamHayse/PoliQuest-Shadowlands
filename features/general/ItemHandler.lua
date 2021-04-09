@@ -4,7 +4,23 @@ local CreateFrame, UIParent, GameTooltip, GameTooltip_SetDefaultAnchor = CreateF
 local select, print, pairs, ipairs, tinsert = select, print, pairs, ipairs, table.insert
 local GetItemInfo, GetItemIcon, GetItemCooldown, GetItemCount, GetTime, InCombatLockdown = GetItemInfo, GetItemIcon, GetItemCooldown, GetItemCount, GetTime, InCombatLockdown
 
-local questItems = addonTable.questItems
+local questItems = addonTable.data.questItems
+
+local feature = {}
+
+local DEBUG_ITEM_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_ITEM_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_ITEM_HANDLER
+end
+
+local function debugPrint(text)
+    if DEBUG_ITEM_HANDLER then
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+    end
+end
 
 local currentItems, currentItemIndex
 -- quest item button
@@ -201,24 +217,6 @@ pqButton.LockButton = lockButton
 local pendingUpdate
 local throttleItemCheck
 
-function addonTable.QuestItemButton_OnPlayerRegenEnabled()
-    if not pendingUpdate and #currentItems > 1 then
-        pqButton.PrevButton:Enable()
-        pqButton.NextButton:Enable()
-        pqButton.PrevView:Enable()
-        pqButton.ViewNext:Enable()
-    end
-end
-
-function addonTable.QuestItemButton_OnPlayerRegenDisabled()
-    if #currentItems > 1 then
-        pqButton.PrevButton:Disable()
-        pqButton.NextButton:Disable()
-        pqButton.PrevView:Disable()
-        pqButton.ViewNext:Disable()
-    end
-end
-
 local function bagUpdateEventsHandler()
     if currentItemIndex then
         local itemCount = GetItemCount(currentItems[currentItemIndex])
@@ -230,18 +228,6 @@ local function bagUpdateEventsHandler()
     end
     throttleItemCheck = GetTime()
 end
-
-addonTable.QuestItemButton_OnBagUpdate = bagUpdateEventsHandler
-
-addonTable.QuestItemButton_OnBagUpdateCooldown = bagUpdateEventsHandler
-
-function addonTable.QuestItemButton_OnUnitSpellcastSucceeded(...)
-    if currentItemIndex and questItems[currentItems[currentItemIndex]] and questItems[currentItems[currentItemIndex]].spellID == select(3, ...)
-    and questItems[currentItems[currentItemIndex]].cooldown then
-        pqButton.Cooldown:SetCooldown(GetTime(), questItems[currentItems[currentItemIndex]].cooldown)
-    end
-end
-
 
 local function itemsChanged()
     -- questItems >= currentItems
@@ -283,6 +269,37 @@ local function updateCurrentItems()
     end
 end
 
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onPlayerRegenEnabled()
+    if not pendingUpdate and #currentItems > 1 then
+        pqButton.PrevButton:Enable()
+        pqButton.NextButton:Enable()
+        pqButton.PrevView:Enable()
+        pqButton.ViewNext:Enable()
+    end
+end
+
+function feature.eventHandlers.onPlayerRegenDisabled()
+    if #currentItems > 1 then
+        pqButton.PrevButton:Disable()
+        pqButton.NextButton:Disable()
+        pqButton.PrevView:Disable()
+        pqButton.ViewNext:Disable()
+    end
+end
+
+feature.eventHandlers.onBagUpdate = bagUpdateEventsHandler
+
+feature.eventHandlers.onBagUpdateCooldown = bagUpdateEventsHandler
+
+function feature.eventHandlers.onUnitSpellcastSucceeded_Player(...)
+    if currentItemIndex and questItems[currentItems[currentItemIndex]] and questItems[currentItems[currentItemIndex]].spellID == select(3, ...)
+    and questItems[currentItems[currentItemIndex]].cooldown then
+        pqButton.Cooldown:SetCooldown(GetTime(), questItems[currentItems[currentItemIndex]].cooldown)
+    end
+end
+
 local function onUpdate()
     if throttleItemCheck and GetTime() - throttleItemCheck > .1 then
         if itemsChanged() then
@@ -312,18 +329,9 @@ local function terminate()
     pqButton:Hide()
 end
 
-local questItemButton = {}
-questItemButton.name = "QuestItemButton"
-questItemButton.events = {
-    { "PLAYER_REGEN_ENABLED" },
-    { "PLAYER_REGEN_DISABLED" },
-    { "BAG_UPDATE" },
-    { "BAG_UPDATE_COOLDOWN" },
-    { "UNIT_SPELLCAST_SUCCEEDED", "player" }
-}
-questItemButton.onUpdate = onUpdate
-questItemButton.initialize = initialize
-questItemButton.terminate = terminate
-questItemButton.Button = pqButton
-
-addonTable[questItemButton.name] = questItemButton
+feature.updateHandler = onUpdate
+feature.initialize = initialize
+feature.terminate = terminate
+feature.Button = pqButton
+addonTable.features = addonTable.features or {}
+addonTable.features.QuestItemButton = feature

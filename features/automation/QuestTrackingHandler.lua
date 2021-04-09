@@ -2,7 +2,25 @@ local _, addonTable = ...
 
 local AddQuestWatch = C_QuestLog.AddQuestWatch
 
-function addonTable.AutoTrackQuests_OnQuestAccepted(questID)
+local feature = {}
+
+local DEBUG_QUEST_TRACKING_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_QUEST_TRACKING_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_QUEST_TRACKING_HANDLER
+end
+
+local function debugPrint(text)
+    if DEBUG_QUEST_TRACKING_HANDLER then
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+    end
+end
+
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onQuestAccepted(questID)
     AddQuestWatch(questID, 1)
 end
 
@@ -12,11 +30,7 @@ end
 local function terminate()
 end
 
-local autoTrackQuests = {}
-autoTrackQuests.name = "AutoTrackQuests"
-autoTrackQuests.events = {
-    { "QUEST_ACCEPTED" }
-}
-autoTrackQuests.initialize = initialize
-autoTrackQuests.terminate = terminate
-addonTable[autoTrackQuests.name] = autoTrackQuests
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.AutoTrackQuests = feature

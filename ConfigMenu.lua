@@ -15,42 +15,53 @@ local function safecall(func, ...)
 	end
 end
 
-local function anchorFramesWithDFS(root, rootPoint, parent, currentDepth, currentCount)
-    if not parent:GetUserData("children") then
-        return currentCount
-    else
-        for i, child in ipairs(parent:GetUserData("children")) do
-            local childFrame = child.frame
-            childFrame:ClearAllPoints()
-            childFrame:SetWidth(parent.frame:GetWidth() * (9-currentDepth)/(10-currentDepth))
-            childFrame:SetPoint("TOPRIGHT", root, rootPoint, 0, -currentCount*40)
-            currentCount = currentCount + 1
-            currentCount = anchorFramesWithDFS(root, rootPoint, child, currentDepth + 1, currentCount)
-        end
-        return currentCount
+--local prevLeftColumnElementType, 
+-- need to remember the last element type in each column in order to do spacing properly (while DFS is going)
+-- should remember the depth of the DFS in order to indent properly (indent is the same for each element type?)
+-- elements will be anchored to the left of the previous elemnts
+
+-- use 2 anchors to anchor menu elements?
+  -- anchor left of menu elemnt to left of container (offset according to depth)
+  -- anchor top of menu element to bottom of previous element or top of container (using spacing table to determne the offset)
+  -- default height is fine
+
+--[[
+    User data:
+    - child - used by the custom layout to start the DFS
+    - children - used by DFS to nest menu elemnts
+]]
+
+
+local leftColumnHeight, rightColumnHeight
+local indentLength = 25
+local function anchorFramesWithDFS(widget, relativeTo, relativePoint, depth, columnHeight)
+    local frame = widget.frame
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", relativeTo, relativePoint, depth * indentLength, -columnHeight)
+    if widget.type:find("CheckBox") then
+        frame:SetWidth(relativeTo:GetWidth() / 2 - depth * indentLength)
     end
+    columnHeight = columnHeight + frame:GetHeight()
+    for _, child in ipairs(widget:GetUserData("children") or {}) do
+        local childFrame = child.frame
+        columnHeight = columnHeight + anchorFramesWithDFS(child, relativeTo, relativePoint, depth + 1, columnHeight)
+    end
+    return columnHeight
 end
 
+-- previous frame in each column needs to be remembered in order to anchor
 local function configLayout(parent, children)
-    local leftColumnCount = 0
-    local rightColumnCount = 0
+    local leftColumnHeight, rightColumnHeight = 0, 0
     for i, child in ipairs(children) do
-        local childFrame = child.frame
-        if not child:GetUserData("child") then
-            childFrame:ClearAllPoints()
-            childFrame:SetWidth(.5 * 544)
-            if leftColumnCount <= rightColumnCount then
-                childFrame:SetPoint("TOPRIGHT", parent, "TOP", 0, -leftColumnCount*40)
-                leftColumnCount = leftColumnCount + 1
-                leftColumnCount = anchorFramesWithDFS(parent, "TOP", child, 1, leftColumnCount)
+        if child.type == "PoliFeatureCheckBox" then
+            if leftColumnHeight <= rightColumnHeight then
+                leftColumnHeight = anchorFramesWithDFS(child, parent, "TOPLEFT", 0, leftColumnHeight)
             else
-                childFrame:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, -rightColumnCount*40)
-                rightColumnCount = rightColumnCount + 1
-                rightColumnCount = anchorFramesWithDFS(parent, "TOPRIGHT", child, 1, rightColumnCount)
+                rightColumnHeight = anchorFramesWithDFS(child, parent, "TOP", 0, rightColumnHeight)
             end
         end
     end
-    safecall(parent.obj.LayoutFinished, parent.obj, nil, leftColumnCount >= rightColumnCount and leftColumnCount * 40 + children[1].frame:GetHeight() or rightColumnCount * 40 + children[1].frame:GetHeight())
+    safecall(parent.obj.LayoutFinished, parent.obj, nil, leftColumnHeight >= rightColumnHeight and leftColumnHeight or rightColumnHeight)
 end
 
 AceGUI:RegisterLayout("PoliQuestConfig_Layout", configLayout)
@@ -69,57 +80,111 @@ local function menuLayout(parent, children)
 end
 
 AceGUI:RegisterLayout("PoliQuestMenu_Layout", menuLayout)
-
+--[[
+local function shouldDisableWidget(widget)
+    return widget.GetValue and not widget:GetValue() or widget.GetText and not widget:GetText()
+    return widget.type:find("CheckBox") and widget:GetValue() == false
+        or widget.type == "EditBox" and widget:GetText()
+end
+]]
+-- perform DFS to update enabled/disabled status
 local function updateCheckBoxEnabledStatus(container, childrenDisabled)
     local children = container.children or container:GetUserData("children") or {}
     for _, child in ipairs(children) do
         child:SetDisabled(childrenDisabled)
-        if (child.GetValue and not child:GetValue() or child.GetText and not child:GetText()) or childrenDisabled then
+        if childrenDisabled or child.type:find("CheckBox") and child:GetValue() == false then
                 updateCheckBoxEnabledStatus(child, true)
         end
     end
 end
 
-local function createMenuElement(container, elementType, label, featureName, switchName, value, child, children)
-    local element = AceGUI:Create(elementType)
-    element:SetLabel(label)
-    local callback
-    if switchName == nil then
-        callback = function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureConfiguration(featureName, key) end
+-- callback function should enable/disable children nested under this element as appropriate
+local function createFeatureCheckBox(container, label, featureName)
+    local featureTable = addonTable.features[featureName]
+    local checkbox = AceGUI:Create("PoliFeatureCheckBox")
+    checkbox:SetLabel(label)
+    checkbox:SetTriState(true)
+    local value
+    if PoliSavedVars[featureName].enabled then
+        if featureTable.isDebug() then
+            value = nil
+        else
+            value = true  
+        end
     else
-        callback = function(widget, event, key) updateCheckBoxEnabledStatus(container, false) addonTable.updateFeatureSwitch(featureName, switchName, key) end
+        value = false
     end
-    if elementType == "CheckBox" then
-        element:SetValue(value)
-        element:SetCallback("OnValueChanged", callback)
-    elseif elementType == "EditBox" then
-        element:SetText(value)
-        element:SetCallback("OnEnterPressed", callback)
-    elseif elementType == "Dropdown" then
-        element:SetList({ Pawn = "Pawn", Dumb = "Dumb"})
-        element:SetValue(value)
-        element:SetItemDisabled("Pawn", not addonTable.PawnLoaded)
-        element:SetCallback("OnValueChanged", callback)
-    end
-    if child then
-        element:SetUserData("child", true)
-    end
-    if children then
-        element:SetUserData("children", children)
-    end
-    return element
+    checkbox:SetValue(value)
+    checkbox:SetCallback("OnValueChanged", function(widget, event, key)
+        updateCheckBoxEnabledStatus(container, false)                       -- does this function work like i want it to?
+        if key == false then
+            featureTable.setDebug(false)
+            print("|cFF5c8cc1PoliQuest:|r " .. label .. " disabled")
+            addonTable.util.updateFeatureConfiguration(featureName, featureTable, false)
+        else
+            if key == true then
+                featureTable.setDebug(false)
+                print("|cFF5c8cc1PoliQuest:|r " .. label .. " enabled")
+            else
+                featureTable.setDebug(true)
+                print("|cFF5c8cc1PoliQuest:|r " .. label .. " debug enabled")
+            end
+            addonTable.util.updateFeatureConfiguration(featureName, featureTable, true)
+        end
+    end)
+    return checkbox
 end
+
+local function createSwitchCheckBox(container, label, featureName, switchName)
+    local featureTable = addonTable.features[featureName]
+    local checkbox = AceGUI:Create("CheckBox")
+    checkbox:SetLabel(label)
+    checkbox:SetValue(PoliSavedVars[featureName].switches[switchName])
+    checkbox:SetCallback("OnValueChanged", function(widget, event, key)
+        updateCheckBoxEnabledStatus(container, false)                       -- does this function work like i want it to?
+        addonTable.util.updateFeatureSwitch(featureName, featureTable, switchName, key)
+    end)
+    return checkbox
+end
+
+local function createSwitchEditBox(container, label, featureName, switchName, width)
+    local featureTable = addonTable.features[featureName]
+    local editbox = AceGUI:Create("EditBox")
+    editbox:SetLabel(label)
+    editbox:SetWidth(width)
+    editbox:SetText(PoliSavedVars[featureName].switches[switchName])
+    editbox:SetCallback("OnEnterPressed", function(widget, event, key)
+        updateCheckBoxEnabledStatus(container, false)                       -- does this function work like i want it to?
+        addonTable.util.updateFeatureSwitch(featureName, featureTable, switchName, key)
+    end)
+    return editbox
+end
+
+local function createSwitchDropdown(container, label, featureName, switchName, values, width)
+    local featureTable = addonTable.features[featureName]
+    local dropdown = AceGUI:Create("Dropdown")
+    dropdown:SetLabel(label)
+    dropdown:SetWidth(width)
+    dropdown:SetList(values)
+    dropdown:SetValue(PoliSavedVars[featureName].switches[switchName])
+    dropdown:SetCallback("OnValueChanged", function(widget, event, key)
+        updateCheckBoxEnabledStatus(container, false)                       -- does this function work like i want it to?
+        addonTable.util.updateFeatureSwitch(featureName, featureTable, switchName, key)
+    end)
+    return dropdown
+end
+
 
 local function drawGeneralTab(container)
     container:PauseLayout()
 
-    local QuestItemButtonCheckButton = createMenuElement(container, "CheckBox", "Quest Item Button", "QuestItemButton", nil, PoliSavedVars.QuestItemButton.enabled, nil, nil)
+    local QuestItemButtonCheckButton = createFeatureCheckBox(container, "Quest Item Button", "QuestItemButton")
     container:AddChild(QuestItemButtonCheckButton)
     
-    local SkipCutscenesCheckButton = createMenuElement(container, "CheckBox", "Skip Cutscenes", "SkipCutscenes", nil, PoliSavedVars.SkipCutscenes.enabled, nil, nil)
+    local SkipCutscenesCheckButton = createFeatureCheckBox(container, "Skip Cutscenes", "SkipCutscenes")
     container:AddChild(SkipCutscenesCheckButton)
 
-    local QuestProgressTrackerCheckButton = createMenuElement(container, "CheckBox", "Quest Progress Tracking", "QuestProgressTracker", nil, PoliSavedVars.QuestProgressTracker.enabled, nil, nil)
+    local QuestProgressTrackerCheckButton = createFeatureCheckBox(container, "Quest Progress Tracking", "QuestProgressTracker")
     container:AddChild(QuestProgressTrackerCheckButton)
     
     if InCombatLockdown() then
@@ -135,31 +200,33 @@ end
 local function drawAutomationTab(container)
     container:PauseLayout()
 
-    local IlvlThreshHoldEditBox = createMenuElement(container, "EditBox", "Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold, true, nil)
+    local IlvlThreshHoldEditBox = createSwitchEditBox(container, "Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", 150)
     container:AddChild(IlvlThreshHoldEditBox)
 
-    local RewardSelectionLogicDropdown = createMenuElement(container, "Dropdown", "Reward Selection Logic", "QuestRewardSelectionAutomation", "SelectionLogic", PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic, true, nil)
+    local RewardSelectionLogicDropdown = createSwitchDropdown(container, "Reward Selection Logic", "QuestRewardSelectionAutomation", "SelectionLogic", {"Dumb", "Pawn"}, 150)
+    RewardSelectionLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
     container:AddChild(RewardSelectionLogicDropdown)
 
-    local QuestRewardSelectionAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Reward Selection Automation", "QuestRewardSelectionAutomation", nil, PoliSavedVars.QuestRewardSelectionAutomation.enabled, nil, { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown })
+    local QuestRewardSelectionAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Selection Automation", "QuestRewardSelectionAutomation")
+    QuestRewardSelectionAutomationCheckButton:SetUserData("children", { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown })
     container:AddChild(QuestRewardSelectionAutomationCheckButton)
 
-    local QuestInteractionAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Interaction Automation", "QuestInteractionAutomation", nil, PoliSavedVars.QuestInteractionAutomation.enabled, nil, nil)
+    local QuestInteractionAutomationCheckButton = createFeatureCheckBox(container, "Quest Interaction Automation", "QuestInteractionAutomation")
     container:AddChild(QuestInteractionAutomationCheckButton)
 
-    local DialogInteractionAutomationCheckButton = createMenuElement(container, "CheckBox", "Dialog Interaction Automation", "DialogInteractionAutomation", nil, PoliSavedVars.DialogInteractionAutomation.enabled, nil, nil)
+    local DialogInteractionAutomationCheckButton = createFeatureCheckBox(container, "Dialog Interaction Automation", "DialogInteractionAutomation")
     container:AddChild(DialogInteractionAutomationCheckButton)
 
-    local QuestRewardEquipAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Reward Equip Automation", "QuestRewardEquipAutomation", nil, PoliSavedVars.QuestRewardEquipAutomation.enabled, nil, nil)
+    local QuestRewardEquipAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Equip Automation", "QuestRewardEquipAutomation")
     container:AddChild(QuestRewardEquipAutomationCheckButton)
 
-    local QuestEmoteAutomationCheckButton = createMenuElement(container, "CheckBox", "Quest Emote Automation", "QuestEmoteAutomation", nil, PoliSavedVars.QuestEmoteAutomation.enabled, nil, nil)
+    local QuestEmoteAutomationCheckButton = createFeatureCheckBox(container, "Quest Emote Automation", "QuestEmoteAutomation")
     container:AddChild(QuestEmoteAutomationCheckButton)
 
-    local AutoTrackQuestsCheckButton = createMenuElement(container, "CheckBox", "Automatically Track Quests", "AutoTrackQuests", nil, PoliSavedVars.AutoTrackQuests.enabled, nil, nil)
+    local AutoTrackQuestsCheckButton = createFeatureCheckBox(container, "Automatically Track Quests", "AutoTrackQuests")
     container:AddChild(AutoTrackQuestsCheckButton)
 
-    local QuestSharingAutomationCheckButton = createMenuElement(container, "CheckBox", "Automatically Share Zone Dailies", "QuestSharingAutomation", nil, PoliSavedVars.QuestSharingAutomation.enabled, nil, nil)
+    local QuestSharingAutomationCheckButton = createFeatureCheckBox(container, "Automatically Share Zone Dailies", "QuestSharingAutomation")
     container:AddChild(QuestSharingAutomationCheckButton)
     
     if InCombatLockdown() then
@@ -175,10 +242,10 @@ end
 local function drawSpeedLevelingTab(container)
     container:PauseLayout()
 
-    local HearthstoneAutomationCheckButton = createMenuElement(container, "CheckBox", "Hearthstone Automation", "HearthstoneAutomation", nil, PoliSavedVars.HearthstoneAutomation.enabled, nil, nil)
+    local HearthstoneAutomationCheckButton = createFeatureCheckBox(container, "Hearthstone Automation", "HearthstoneAutomation")
     container:AddChild(HearthstoneAutomationCheckButton)
     
-    local MailboxAutomationCheckButton = createMenuElement(container, "CheckBox", "Auto-retrieve Radinax Gems", "MailboxAutomation", nil, PoliSavedVars.MailboxAutomation.enabled, nil, nil)
+    local MailboxAutomationCheckButton = createFeatureCheckBox(container, "Auto-retrieve Radinax Gems", "MailboxAutomation")
     container:AddChild(MailboxAutomationCheckButton)
     
     if InCombatLockdown() then
@@ -224,124 +291,6 @@ local function drawDocumentationTab(container)
     title:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
     title:SetFontObject(GameFontHighlightLarge)
     scrollFrame:AddChild(title)
-    
-    local header1 = AceGUI:Create("Label")
-    header1:SetText("Purpose:")
-    header1:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    header1:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
-    header1:SetFontObject(GameFontHighlight)
-    scrollFrame:AddChild(header1)
-    
-    local text1 = AceGUI:Create("Label")
-    text1:SetText("PoliQuest is a Shadowlands questing addon that makes leveling less cumbersome by providing tools that reduce mouse button clicks and automating quest interactions.")
-    text1:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text1)
-    
-    local header2 = AceGUI:Create("Label")
-    header2:SetText("Features:")
-    header2:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    header2:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
-    header2:SetFontObject(GameFontHighlight)
-    scrollFrame:AddChild(header2)
-    
-    local text2 = AceGUI:Create("Label")
-    text2:SetText([[The following tasks are automated for level 50-59 Shadowlands questing:
-    
-    - PQButton that automatically binds Shadowlands quest items to it
-    - Quest emote automation
-    - Automatically accept and complete quests (level 50-59 quests only)
-    - Automatically select correct quest dialog (level 50-59 quests only)
-    - Automatically track quests when accepted (all quests)
-    - Track quest progress percent in quest info display (all quests)
-    - Quest reward automation (level 50-59 quests only)
-    - Automatically equip quest loot upgrades (all quests. non-BOE items only)
-    - Automatically set hearthstone (less than level 60 only)]])
-    text2:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text2)
-    
-    local header3 = AceGUI:Create("Label")
-    header3:SetText("Keybinding the quest item button:")
-    header3:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    header3:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
-    header3:SetFontObject(GameFontHighlight)
-    scrollFrame:AddChild(header3)
-    
-    local text3 = AceGUI:Create("Label")
-    text3:SetText("Put the following in a macro to keybind the button:")
-    text3:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text3)
-    
-    local text4 = AceGUI:Create("Label")
-    text4:SetText("/click PQButton")
-    text4:SetColor(0.66666667, 0.66666667, 0.66666667)
-    text4:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text4)
-    
-    local text5 = AceGUI:Create("Label")
-    text5:SetText("PQNext and PQPrev can also be keybound to cycle through multiple quest items in your inventory while out of combat.  I use the following")
-    text5:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text5)
-    
-    local text6 = AceGUI:Create("Label")
-    text6:SetText("/click [nomod]PQButton;[mod:alt]PQNext")
-    text6:SetColor(0.66666667, 0.66666667, 0.66666667)
-    text6:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text6)
-    
-    local text7 = AceGUI:Create("Label")
-    text7:SetText("I don't keybind PQPrev since cycling through multiple quest items can be achieved by clicking one of these buttons alone.  However, the option to keybind both is there if you want it.")
-    text7:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text7)
-    
-    local header4 = AceGUI:Create("Label")
-    header4:SetText("More info about the PQButton:")
-    header4:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    header4:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
-    header4:SetFontObject(GameFontHighlight)
-    scrollFrame:AddChild(header4)
-    
-    local text8 = AceGUI:Create("Label")
-    text8:SetText([[The PQButton can only be updated out of combat. For example, if you obtain a quest with a quest item in combat, the addon will wait for combat to end before updating the PQButton.  Also, if you have multiple quest items, you will not be able to swap them on the PQButton unless you are out of combat.
-
-The PQButton can also be clicked with the mouse cursor if desired. You can also mouse over it to get the quest item info. The PQButton should only show when it is unlocked for moving, or you have one or multiple quest items.]])
-    text8:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text8)
-    
-    local header5 = AceGUI:Create("Label")
-    header5:SetText("Quest Loot Automation Algorithm:")
-    header5:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    header5:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
-    header5:SetFontObject(GameFontHighlight)
-    scrollFrame:AddChild(header5)
-    
-    local text9 = AceGUI:Create("Label")
-    text9:SetText([[1. If there is only 1 quest item reward, then select that one.
-    Stop automation if:
-        The "Automatically select quest rewards" switch is disabled.
-        Any of the quest rewards is not equippable.
-
-2. Get the player's current loot spec, or current spec if they don't have one.
-    Stop automation if:
-        Item is missing from the equip slot for one of the quest loot items.
-        None of the items are for your preferred spec.
-
-3. Find the largest potential ilvl upgrade for this spec based on your equipped gear (factoring in sockets and considering that warforge is possible).
-
-4. If there is only one largest spec upgrade, then select that one.
-    Stop automation if:
-        The "Strict Quest Reward Automation" switch is enabled.
-        One of the largest upgrades is a trinket.
-
-5. Find the item that yields the largest increase in stats and choose that one. (For example, legs have more stats than gloves at equal ilvl, so legs get chosen.)]])
-    text9:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    scrollFrame:AddChild(text9)
-    
-    local header6 = AceGUI:Create("Label")
-    header6:SetText("Author's Note:")
-    header6:SetWidth(scrollFrame.frame:GetWidth() - 20)
-    header6:SetColor(0.36078431372549, 0.549019607843, 0.756862745098)
-    header6:SetFontObject(GameFontHighlight)
-    scrollFrame:AddChild(header6)
     
     local text10 = AceGUI:Create("Label")
     text10:SetText([[This is my first addon. I'm still pretty new to making addons since I mostly only did WeakAuras stuff before.
@@ -398,7 +347,7 @@ local function selectGroup(container, group)
 end
 
 local configMenu, configTab
-function addonTable.createMenu()
+local function createMenu()
     configMenu = AceGUI:Create("Frame")
     configMenu:SetTitle("PoliQuest Configuration")
     configMenu.statustext:GetParent():Hide()
@@ -422,10 +371,10 @@ function addonTable.createMenu()
     toggleButton:SetCallback("OnClick", function()
         if InCombatLockdown() then
             print("Quest Item Button can only be locked/unlocked outside of combat.")
-        elseif not addonTable.QuestItemButton.Button.LockButton:IsVisible() then
-            addonTable.QuestItemButton.Button:unlock()
+        elseif not addonTable.features.QuestItemButton.Button.LockButton:IsVisible() then
+            addonTable.features.QuestItemButton.Button:unlock()
         else
-            addonTable.QuestItemButton.Button:lock()
+            addonTable.features.QuestItemButton.Button:lock()
         end
     end)
     configMenu:AddChild(toggleButton)
@@ -434,6 +383,8 @@ function addonTable.createMenu()
     return configMenu
 end
 
+addonTable.util = addonTable.util or {}
+addonTable.util.createMenu = createMenu
 
 local menuLockdownFrame = CreateFrame("Frame")
 menuLockdownFrame:RegisterEvent("PLAYER_REGEN_ENABLED")

@@ -6,18 +6,28 @@ local GetContainerNumSlots, GetContainerItemLink, GetItemLink, GetCurrentItemLev
 local GetInventoryItemLink, GetTime, GetItemName, InCombatLockdown, EquipItemByName = GetInventoryItemLink, GetTime, C_Item.GetItemName, InCombatLockdown, EquipItemByName
 local NUM_BAG_SLOTS, ItemLocation, _G = NUM_BAG_SLOTS, ItemLocation, _G
 
-local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
-local levelingItems = addonTable.levelingItems
-local bonusToIlvl = addonTable.bonusToIlvl
+local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
+local levelingItems = addonTable.data.levelingItems
+local bonusToIlvl = addonTable.data.bonusToIlvl
+
+local feature = {}
+
+local DEBUG_REWARDS_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_REWARDS_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_REWARDS_HANDLER
+end
 
 local function debugPrint(text)
     if DEBUG_REWARDS_HANDLER then
-        print("|cFF5c8cc1PoliQuest:|r " .. text)
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
     end
 end
 
 local function isBoP(itemLink)
-    local scanningTooltip = addonTable.tooltip
+    local scanningTooltip = addonTable.util.tooltip
     scanningTooltip:ClearLines()
     scanningTooltip:SetHyperlink(itemLink)
     for i=1, scanningTooltip:NumLines() do
@@ -117,8 +127,10 @@ local function isUpgrade(bagID, slotIndex)
     return false
 end
 
+feature.eventHandlers = {}
+
 local questLootReceivedTime, questLootItemLinks
-function addonTable.QuestRewardEquipAutomation_OnQuestLootReceived(_, link)
+function feature.eventHandlers.onQuestLootReceived(_, link)
     if isBoPEquipableSpecItem(link) then
         debugPrint("is BOP")
         questLootReceivedTime = GetTime()
@@ -126,7 +138,7 @@ function addonTable.QuestRewardEquipAutomation_OnQuestLootReceived(_, link)
     end
 end
 
-function addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged(equipmentSlotIndex)
+function feature.eventHandlers.onPlayerEquipmentChanged(equipmentSlotIndex)
     if #questLootItemLinks > 0 then
         local itemLoc = ItemLocation:CreateFromEquipmentSlot(equipmentSlotIndex)
         if itemLoc:IsValid() then
@@ -176,13 +188,8 @@ local function terminate()
     questLootReceivedTime = nil
 end
 
-local questRewardEquipAutomation = {}
-questRewardEquipAutomation.name = "QuestRewardEquipAutomation"
-questRewardEquipAutomation.events = {
-    { "QUEST_LOOT_RECEIVED" },
-    { "PLAYER_EQUIPMENT_CHANGED" }
-}
-questRewardEquipAutomation.onUpdate = onUpdate
-questRewardEquipAutomation.initialize = initialize
-questRewardEquipAutomation.terminate = terminate
-addonTable[questRewardEquipAutomation.name] = questRewardEquipAutomation
+feature.updateHandler = onUpdate
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.QuestRewardEquipAutomation = feature

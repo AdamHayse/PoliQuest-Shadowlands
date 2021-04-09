@@ -25,4 +25,7 @@
 	<Script file="widgets\AceGUIWidget-Label.lua"/>
 	<Script file="widgets\AceGUIWidget-MultiLineEditBox.lua"/>
 	<Script file="widgets\AceGUIWidget-Slider.lua"/>
+
+	<!-- Custom Widgets -->
+	<Script file="custom_widgets\PoliFeatureCheckBox.lua"/>
 </Ui>

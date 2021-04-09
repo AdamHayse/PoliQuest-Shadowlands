@@ -1,6 +1,7 @@
 local _, addonTable = ...
 
-addonTable.innWhitelist = {
+addonTable.data = {}
+addonTable.data.innWhitelist = {
 
     -- Bastion
     ["Caretaker Calisaphene"] = true,
@@ -37,7 +38,7 @@ addonTable.innWhitelist = {
     ["Host Ta'rela"] = true
 }
 
-addonTable.itemEquipLocToEquipSlot = {
+addonTable.data.itemEquipLocToEquipSlot = {
     ["INVTYPE_AMMO"] = {0},
     ["INVTYPE_HEAD"] = {1},
     ["INVTYPE_NECK"] = {2},
@@ -68,12 +69,12 @@ addonTable.itemEquipLocToEquipSlot = {
     ["INVTYPE_QUIVER"] = { 20, 21, 22, 23 }  ]]
 }
 
-addonTable.levelingItems = {
+addonTable.data.levelingItems = {
     "Hunger of the Pack",
     "Boots of the Gilded Path"
 }
 
-addonTable.bonusToIlvl = {
+addonTable.data.bonusToIlvl = {
     [168639] = 7.1,  -- Deadly Lava Lazuli
     [168637] = 49.3,  -- Leviathan's Eye of Agility
     [168638] = 49.3,  -- Leviathan's Eye of Intellect
@@ -169,9 +170,9 @@ addonTable.bonusToIlvl = {
     [2939] = 1000,  -- Cat's Swiftness
 }
 
-setmetatable(addonTable.bonusToIlvl, {__index = function() return 0 end})
+setmetatable(addonTable.data.bonusToIlvl, {__index = function() return 0 end})
 
-addonTable.dialogWhitelist = {
+addonTable.data.dialogWhitelist = {
     ["Shadowlands: A Chilling Summons"] = {
         ["npc"] = {
             "Nazgrim",
@@ -809,7 +810,7 @@ addonTable.dialogWhitelist = {
     }
 }
 
-addonTable.questIDToName = {
+addonTable.data.questIDToName = {
     [62473] = "what's old is new",
     [60428] = "the blade of the primus",
     [59426] = "your personal assistant",
@@ -1515,7 +1516,7 @@ addonTable.questIDToName = {
     [61432] = "lost journals",
 }
 
-addonTable.questNames = {
+addonTable.data.questNames = {
     ["unmasked"] = true,
     ["juicing up"] = true,
     ["tal-inara's call"] = true,
@@ -2172,7 +2173,7 @@ addonTable.questNames = {
     ["return to tirna vaal"] = true,
 }
 
-addonTable.questItems = {
+addonTable.data.questItems = {
     [179719] = {
         ["count"] = 0,
         ["spellID"] = 329037,

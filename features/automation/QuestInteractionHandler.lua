@@ -8,25 +8,32 @@ local GetActiveQuests, SelectActiveQuest, GISelectActiveQuest, GetAvailableQuest
 local GetNumActiveQuests, GetActiveTitle, GetNumAvailableQuests, GetAvailableQuestInfo = GetNumActiveQuests, GetActiveTitle, GetNumAvailableQuests, GetAvailableQuestInfo
 local AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAutoQuestPopUps, GetAutoQuestPopUp = AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAutoQuestPopUps, GetAutoQuestPopUp
 local QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame = QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame
-local AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE, AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE
+local AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE = AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE
 
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
-local questNames = addonTable.questNames
-local questIDToName = addonTable.questIDToName
-local bonusToIlvl = addonTable.bonusToIlvl
+
+local feature = {}
+
+local DEBUG_QUEST_INTERACTION_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_QUEST_INTERACTION_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_QUEST_INTERACTION_HANDLER
+end
 
 local function debugPrint(text)
     if DEBUG_QUEST_INTERACTION_HANDLER then
-        print("|cFF5c8cc1PoliQuest:|r " .. text)
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
     end
 end
 
 local function onGossipShow()
     local actQuests = GetActiveQuests() or {}
-    debugPrint("numActiveQuests: "..#actQuests)
+    debugPrint("numActiveQuests: " .. #actQuests)
     for i, v in ipairs(actQuests) do
-        if questIDToName[v.questID] and v.isComplete then
-            debugPrint("Selecting index "..i)
+        if v.isComplete then
+            debugPrint("Selecting index " .. i)
             SelectActiveQuest(i)
             GISelectActiveQuest(i)
             return
@@ -34,134 +41,124 @@ local function onGossipShow()
     end
 
     local availableQuests = GetAvailableQuests() or {}
-    debugPrint("numAvailableQuests: "..#availableQuests)
+    debugPrint("numAvailableQuests: " .. #availableQuests)
     for i, v in ipairs(availableQuests) do
-        if questIDToName[v.questID] then
-            debugPrint("Selecting index "..i)
-            SelectAvailableQuest(i)
-            GISelectAvailableQuest(i)
-            return
-        end
+        debugPrint("Selecting index " .. i)
+        SelectAvailableQuest(i)
+        GISelectAvailableQuest(i)
+        return
     end
 end
 
-function addonTable.QuestInteractionAutomation_OnGossipShow()
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onGossipShow()
+    debugPrint("QuestInteractionAutomation - Entering onGossipShow")
     onGossipShow()
+    debugPrint("QuestInteractionAutomation - Exiting onGossipShow")
 end
 
-function addonTable.QuestInteractionAutomation_OnQuestGreeting()
-    debugPrint("numActiveQuests: "..GetNumActiveQuests())
-    for i=1, GetNumActiveQuests() do
-        local questName, isComplete = GetActiveTitle(i)
-        debugPrint("questName: "..questName)
+function feature.eventHandlers.onQuestGreeting()
+    debugPrint("QuestInteractionAutomation - Entering onQuestGreeting")
+    local numActiveQuests = GetNumActiveQuests()
+    debugPrint("numActiveQuests: " .. numActiveQuests)
+    for i=1, numActiveQuests do
+        local _, isComplete = GetActiveTitle(i)
         if isComplete then
-            debugPrint("isComplete: true")
-        else
-            debugPrint("isComplete: false")
-        end
-        if questNames[slower(questName)] and isComplete then
+            debugPrint("Selecting index " .. i)
             SelectActiveQuest(i)
             GISelectActiveQuest(i)
+            debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
             return
         end
     end
 
-    debugPrint("numAvailableQuests: "..GetNumAvailableQuests())
-    for i=1, GetNumAvailableQuests() do
-        local questID = select(5, GetAvailableQuestInfo(i))
-        debugPrint(i.." "..questID)
-        if questIDToName[questID] then
-            SelectAvailableQuest(i)
-            GISelectAvailableQuest(i)
-            return
-        end
+    local numAvailableQuests = GetNumAvailableQuests()
+    debugPrint("numAvailableQuests: " .. numAvailableQuests)
+    for i=1, numAvailableQuests do
+        debugPrint("Selecting index " .. i)
+        SelectAvailableQuest(i)
+        GISelectAvailableQuest(i)
+        debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
+        return
     end
+    debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
 end
 
-function addonTable.QuestInteractionAutomation_OnQuestDetail()
-    if QuestInfoTitleHeader ~= nil then
-        debugPrint("QuestInfoTitleHeader shown: true")
-    else
-        debugPrint("QuestInfoTitleHeader shown: false")
-    end
+function feature.eventHandlers.onQuestDetail()
+    debugPrint("QuestInteractionAutomation - Entering onQuestDetail")
+    debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
     if QuestInfoTitleHeader then
-        if QuestInfoTitleHeader:GetText() ~= nil then
-            debugPrint("QuestInfoTitleHeader: "..QuestInfoTitleHeader:GetText())
-        else
-            debugPrint("QuestInfoTitleHeader: nil")
-        end
+        debugPrint("QuestInfoTitleHeader: ".. (QuestInfoTitleHeader:GetText() or "nil"))
         if QuestInfoTitleHeader:GetText() and QuestInfoTitleHeader:GetText() ~= "" then
-            if questNames[slower(QuestInfoTitleHeader:GetText())] then
-                AcceptQuest()
-            elseif slower(QuestInfoTitleHeader:GetText()) == "blinded by the light" then
-                print("|cFF5c8cc1PoliQuest:|r |cFFFF0000Quests that require level 60 are not automated in order to prevent automation of important quest-related decisions.|r")
-            end
+            AcceptQuest()
         else
             debugPrint("Quest detail visible without title header text. Attempting close.")
             QuestFrame:Hide()
         end
     end
+    debugPrint("QuestInteractionAutomation - Exiting onQuestDetail")
 end
 
-function addonTable.QuestInteractionAutomation_OnQuestProgress()
-    if QuestProgressTitleText ~= nil then
-        debugPrint("QuestProgressTitleText shown: true")
-    else
-        debugPrint("QuestProgressTitleText shown: false")
-    end
+function feature.eventHandlers.onQuestProgress()
+    debugPrint("QuestInteractionAutomation - Entering onQuestProgress")
+    debugPrint("QuestProgressTitleText shown: " .. tostring(not not QuestProgressTitleText))
     if QuestProgressTitleText then
-        debugPrint("QuestProgressTitleText: "..QuestProgressTitleText:GetText())
-        if IsQuestCompletable() then
-            debugPrint("IsQuestCompletable: true")
+        debugPrint("QuestProgressTitleText: " .. QuestProgressTitleText:GetText())
+        local questCompletable = IsQuestCompletable()
+        debugPrint("IsQuestCompletable: " .. tostring(not not questCompletable))
+        if questCompletable then
+            CompleteQuest()
         else
-            debugPrint("IsQuestCompletable: false")
-        end
-        if questNames[slower(QuestProgressTitleText:GetText())] then
-            if IsQuestCompletable() then
-                CompleteQuest()
-            else
-                debugPrint("QuestFrame visible and nothing to do. Attempting close.")
-                QuestFrame:Hide()
-            end
+            debugPrint("QuestFrame visible and nothing to do. Attempting close.")
+            QuestFrame:Hide()
         end
     end
+    debugPrint("QuestInteractionAutomation - Exiting onQuestProgress")
 end
 
-function addonTable.QuestInteractionAutomation_OnQuestComplete()
-    if QuestInfoTitleHeader ~= nil then
-        debugPrint("QuestInfoTitleHeader shown: true")
-    else
-        debugPrint("QuestInfoTitleHeader shown: false")
-    end
+function feature.eventHandlers.onQuestComplete()
+    debugPrint("QuestInteractionAutomation - Entering onQuestComplete")
+    debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
     if QuestInfoTitleHeader then
-        debugPrint(QuestInfoTitleHeader:GetText())
-        if questNames[slower(QuestInfoTitleHeader:GetText())] then
-            if GetNumQuestChoices() <= 1 then
-                GetQuestReward(1)
-            end
+        debugPrint("QuestInfoTitleHeader" .. QuestInfoTitleHeader:GetText())
+        local numQuestChoices = GetNumQuestChoices()
+        debugPrint("numQuestChoices: " .. numQuestChoices)
+        if numQuestChoices <= 1 then
+            GetQuestReward(1)
         end
     end
+    debugPrint("QuestInteractionAutomation - Exiting onQuestComplete")
 end
 
-function addonTable.QuestInteractionAutomation_OnQuestLogUpdate()
+function feature.eventHandlers.onQuestLogUpdate()
     local num = GetNumAutoQuestPopUps()
-    debugPrint("numAutoQuestPopUps "..num)
     if num > 0 then
+        debugPrint("QuestInteractionAutomation - In onQuestLogUpdate")
+        debugPrint("numAutoQuestPopUps "..num)
         for i=1,num do
             local questID = GetAutoQuestPopUp(i)
-            if questIDToName[questID] then
-                debugPrint(i.." "..questIDToName[questID])
-                AutoQuestPopUpTracker_OnMouseDown(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID))
-            end
+            debugPrint(i .. " " .. questIDToName[questID])
+            AutoQuestPopUpTracker_OnMouseDown(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID))
         end
+        debugPrint("QuestInteractionAutomation - Exiting onQuestLogUpdate")
     end
 end
 
-function addonTable.QuestInteractionAutomation_OnQuestAccepted()
+function feature.eventHandlers.onQuestAccepted()
+    debugPrint("QuestInteractionAutomation - Entering onQuestAccepted")
+    local gossipFrameVisible = GossipFrame:IsVisible()
+    debugPrint("GossipFrame visible: " .. tostring(not not gossipFrameVisible))
     if GossipFrame:IsVisible() then
         onGossipShow()
     end
-    QuestFrame:Hide()
+    local questFrameVisible = QuestFrame:IsVisible()
+    debugPrint("QuestFrame visible: " .. tostring(not not questFrameVisible))
+    if questFrameVisible then
+        debugPrint("Hiding QuestFrame")
+        QuestFrame:Hide()
+    end
+    debugPrint("QuestInteractionAutomation - Exiting onQuestAccepted")
 end
 
 local function initialize()
@@ -170,17 +167,7 @@ end
 local function terminate()
 end
 
-local questInteractionAutomation = {}
-questInteractionAutomation.name = "QuestInteractionAutomation"
-questInteractionAutomation.events = {
-    { "GOSSIP_SHOW" },
-    { "QUEST_GREETING" },
-    { "QUEST_DETAIL" },
-    { "QUEST_PROGRESS" },
-    { "QUEST_COMPLETE" },
-    { "QUEST_LOG_UPDATE" },
-    { "QUEST_ACCEPTED" }
-}
-questInteractionAutomation.initialize = initialize
-questInteractionAutomation.terminate = terminate
-addonTable[questInteractionAutomation.name] = questInteractionAutomation
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.QuestInteractionAutomation = feature

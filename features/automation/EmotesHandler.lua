@@ -2,6 +2,22 @@ local _, addonTable = ...
 
 local UnitName, GetLogIndexForQuestID, DoEmote, pairs, smatch, print = UnitName, C_QuestLog.GetLogIndexForQuestID, DoEmote, pairs, string.match, print
 
+local feature = {}
+
+local DEBUG_EMOTES_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_EMOTES_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_EMOTES_HANDLER
+end
+
+local function debugPrint(text)
+    if DEBUG_EMOTES_HANDLER then
+        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+    end
+end
+
 local targetWhitelist = {
     ["Runestone of Rituals"] = {
         questID = 58621,
@@ -34,8 +50,10 @@ local messageWhitelist = {
     strong = "flex"
 }
 
+feature.eventHandlers = {}
+
 local pendingEmote
-function addonTable.QuestEmoteAutomation_OnPlayerTargetChanged()
+function feature.eventHandlers.onPlayerTargetChanged()
     local targetName = UnitName("target")
     if targetName and targetWhitelist[targetName] and GetLogIndexForQuestID(targetWhitelist[targetName].questID) then
         DoEmote(targetWhitelist[targetName].emote)
@@ -45,7 +63,7 @@ function addonTable.QuestEmoteAutomation_OnPlayerTargetChanged()
     end
 end
 
-function addonTable.QuestEmoteAutomation_OnChatMsgMonsterSay(chatMessage, name)
+function feature.eventHandlers.onChatMsgMonsterSay(chatMessage, name)
     if name == "Playful Trickster" then
         for k, v in pairs(messageWhitelist) do
             if smatch(chatMessage, k) then
@@ -69,12 +87,7 @@ end
 local function terminate()
 end
 
-local questEmoteAutomation = {}
-questEmoteAutomation.name = "QuestEmoteAutomation"
-questEmoteAutomation.events = {
-    { "PLAYER_TARGET_CHANGED" },
-    { "CHAT_MSG_MONSTER_SAY" }
-}
-questEmoteAutomation.initialize = initialize
-questEmoteAutomation.terminate = terminate
-addonTable[questEmoteAutomation.name] = questEmoteAutomation
+feature.initialize = initialize
+feature.terminate = terminate
+addonTable.features = addonTable.features or {}
+addonTable.features.QuestEmoteAutomation = feature

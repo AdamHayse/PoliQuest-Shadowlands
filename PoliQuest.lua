@@ -1,22 +1,7 @@
 local addonName, addonTable = ...
 
-local print, ipairs, ssplit, supper, pairs, select, unpack, tinsert, tremove = print, ipairs, string.split, string.upper, pairs, select, unpack, table.insert, table.remove
+local print, ipairs, ssplit, supper, slower, pairs, select, unpack, tinsert, tremove = print, ipairs, string.split, string.upper, string.lower, pairs, select, unpack, table.insert, table.remove
 local InCombatLockdown, CreateFrame, UIParent = InCombatLockdown, CreateFrame, UIParent
-
-local featureNames = {
-    "QuestItemButton",
-    "QuestInteractionAutomation",
-    "DialogInteractionAutomation",
-    "HearthstoneAutomation",
-    "QuestRewardEquipAutomation",
-    "QuestEmoteAutomation",
-    "SkipCutscenes",
-    "MailboxAutomation",
-    "QuestProgressTracker",
-    "AutoTrackQuests",
-    "QuestSharingAutomation",
-    "QuestRewardSelectionAutomation"
-}
 
 local function ternaryExpression(condition, a, b)
     if condition then
@@ -28,17 +13,20 @@ end
 
 local function PoliQuest_OnAddonLoaded(addonName)
     if addonName == "PoliQuest" then
-        addonTable.PawnLoaded = IsAddOnLoaded("Pawn")
+        addonTable.properties = addonTable.properties or {}
+        local pawnLoaded = IsAddOnLoaded("Pawn")
+        addonTable.properties.PawnLoaded = pawnLoaded
+
         PoliSavedVars = PoliSavedVars or {}
         local savedVars = {}
 
         if PoliSavedVars.QuestItemButton == nil then
-            addonTable.QuestItemButton.Button:unlock()
+            addonTable.features.QuestItemButton.Button:unlock()
         else
-            addonTable.QuestItemButton.Button:lock()
+            addonTable.features.QuestItemButton.Button:lock()
         end
         PoliSavedVars.QuestItemButton = PoliSavedVars.QuestItemButton or {}
-        savedVars.QuestItemButton = PoliSavedVars.QuestItemButton and {}
+        savedVars.QuestItemButton = {}
         savedVars.QuestItemButton.enabled = ternaryExpression(type(PoliSavedVars.QuestItemButton.enabled) == "boolean", PoliSavedVars.QuestItemButton.enabled, true)
         savedVars.QuestItemButton.xOffset = ternaryExpression(type(PoliSavedVars.QuestItemButton.xOffset) == "number", PoliSavedVars.QuestItemButton.xOffset, 0)
         savedVars.QuestItemButton.yOffset = ternaryExpression(type(PoliSavedVars.QuestItemButton.yOffset) == "number", PoliSavedVars.QuestItemButton.yOffset, 0)
@@ -48,13 +36,14 @@ local function PoliQuest_OnAddonLoaded(addonName)
         savedVars.QuestInteractionAutomation = {}
         savedVars.QuestInteractionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.enabled) == "boolean", PoliSavedVars.QuestInteractionAutomation.enabled, true)
 
+        -- does this only work if the table is cloned?
         PoliSavedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
-        savedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
+        savedVars.QuestRewardSelectionAutomation = {}
         savedVars.QuestRewardSelectionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.enabled) == "boolean", PoliSavedVars.QuestRewardSelectionAutomation.enabled, true)
         PoliSavedVars.QuestRewardSelectionAutomation.switches = PoliSavedVars.QuestRewardSelectionAutomation.switches or {}
         savedVars.QuestRewardSelectionAutomation.switches = {}
-        savedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold) == "number", PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold, 171)
-        savedVars.QuestRewardSelectionAutomation.switches.SelectionLogic = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic) == "string" and addonTable.PawnLoaded, PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic, "Dumb")
+        savedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold) == "string", PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold, "171")
+        savedVars.QuestRewardSelectionAutomation.switches.SelectionLogic = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic) == "number" and pawnLoaded, PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic, 1)
 
         PoliSavedVars.DialogInteractionAutomation = PoliSavedVars.DialogInteractionAutomation or {}
         savedVars.DialogInteractionAutomation = {}
@@ -94,111 +83,112 @@ local function PoliQuest_OnAddonLoaded(addonName)
         
         PoliSavedVars = savedVars
 
-        for _, featureName in ipairs(featureNames) do
-            addonTable.updateFeatureConfiguration(featureName, PoliSavedVars[featureName].enabled)
+        for featureName, featureTable in pairs(addonTable.features) do
+            addonTable.util.updateFeatureConfiguration(featureName, featureTable, PoliSavedVars[featureName].enabled)
             local switches = PoliSavedVars[featureName].switches
             if switches then
-                for switch, isEnabled in pairs(switches) do
-                    addonTable.updateFeatureSwitch(featureName, switch, isEnabled)
+                for switchName, switchValue in pairs(switches) do
+                    addonTable.util.updateFeatureSwitch(featureName, featureTable, switchName, switchValue)
                 end
             end
         end
-        addonTable.QuestItemButton.Button:ClearAllPoints()
-        addonTable.QuestItemButton.Button:SetPoint(PoliSavedVars.QuestItemButton.relPoint, UIParent, PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset)
+        addonTable.features.QuestItemButton.Button:ClearAllPoints()
+        addonTable.features.QuestItemButton.Button:SetPoint(PoliSavedVars.QuestItemButton.relPoint, UIParent, PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset)
     end
 end
 
 local function PoliQuest_OnPlayerLogout()
-    PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset = select(3, addonTable.QuestItemButton.Button:GetPoint(1))
+    PoliSavedVars.QuestItemButton.relPoint, PoliSavedVars.QuestItemButton.xOffset, PoliSavedVars.QuestItemButton.yOffset = select(3, addonTable.features.QuestItemButton.Button:GetPoint(1))
 end
 
 
 -- All events handled by feature handlers, and the orders in which they should execute with respect to each other
+local features = addonTable.features
 local constantEventHandlers = {
     PLAYER_REGEN_ENABLED = {
-        addonTable.QuestItemButton_OnPlayerRegenEnabled
+        features.QuestItemButton.eventHandlers.onPlayerRegenEnabled
     },
     PLAYER_REGEN_DISABLED = {
-        addonTable.QuestItemButton_OnPlayerRegenDisabled
+        features.QuestItemButton.eventHandlers.onPlayerRegenDisabled
     },
     BAG_UPDATE = {
-        addonTable.QuestItemButton_OnBagUpdate
+        features.QuestItemButton.eventHandlers.onBagUpdate
     },
     BAG_UPDATE_COOLDOWN = {
-        addonTable.QuestItemButton_OnBagUpdateCooldown
+        features.QuestItemButton.eventHandlers.onBagUpdateCooldown
     },
     UNIT_SPELLCAST_SUCCEEDED = {
-        addonTable.QuestItemButton_OnUnitSpellcastSucceeded
+        features.QuestItemButton.eventHandlers.onUnitSpellcastSucceeded_Player
     },
     GOSSIP_SHOW = {
-        addonTable.QuestInteractionAutomation_OnGossipShow,
-        addonTable.DialogInteractionAutomation_OnGossipShow,
-        addonTable.HearthstoneAutomation_OnGossipShow
+        features.QuestInteractionAutomation.eventHandlers.onGossipShow,
+        features.DialogInteractionAutomation.eventHandlers.onGossipShow,
+        features.HearthstoneAutomation.eventHandlers.onGossipShow
     },
     QUEST_GREETING = {
-        addonTable.QuestInteractionAutomation_OnQuestGreeting
+        features.QuestInteractionAutomation.eventHandlers.onQuestGreeting
     },
     QUEST_DETAIL = {
-        addonTable.QuestInteractionAutomation_OnQuestDetail
+        features.QuestInteractionAutomation.eventHandlers.onQuestDetail
     },
     QUEST_PROGRESS = {
-        addonTable.QuestInteractionAutomation_OnQuestProgress
+        features.QuestInteractionAutomation.eventHandlers.onQuestProgress
     },
     QUEST_COMPLETE = {
-        addonTable.QuestInteractionAutomation_OnQuestComplete,
-        addonTable.QuestRewardSelectionAutomation_OnQuestComplete
+        features.QuestInteractionAutomation.eventHandlers.onQuestComplete,
+        features.QuestRewardSelectionAutomation.eventHandlers.onQuestComplete
     },
     QUEST_LOG_UPDATE = {
-        addonTable.QuestInteractionAutomation_OnQuestLogUpdate,
-        addonTable.QuestProgressTracker_OnQuestLogUpdate
+        features.QuestInteractionAutomation.eventHandlers.onQuestLogUpdate,
+        features.QuestProgressTracker.eventHandlers.onQuestLogUpdate
     },
     QUEST_ACCEPTED = {
-        addonTable.AutoTrackQuests_OnQuestAccepted,
-        addonTable.DialogInteractionAutomation_OnQuestAccepted,
-        addonTable.QuestInteractionAutomation_OnQuestAccepted,
-        addonTable.QuestSharingAutomation_OnQuestAccepted
+        features.AutoTrackQuests.eventHandlers.onQuestAccepted,
+        features.DialogInteractionAutomation.eventHandlers.onQuestAccepted,
+        features.QuestInteractionAutomation.eventHandlers.onQuestAccepted,
+        features.QuestSharingAutomation.eventHandlers.onQuestAccepted
     },
     QUEST_REMOVED = {
-        addonTable.QuestProgressTracker_OnQuestRemoved
+        features.QuestProgressTracker.eventHandlers.onQuestRemoved
     },
     CONFIRM_BINDER = {
-        addonTable.HearthstoneAutomation_OnConfirmBinder
+        features.HearthstoneAutomation.eventHandlers.onConfirmBinder
     },
     GOSSIP_CLOSED = {
-        addonTable.HearthstoneAutomation_OnGossipClosed
+        features.HearthstoneAutomation.eventHandlers.onGossipClosed
     },
     QUEST_LOOT_RECEIVED = {
-        addonTable.QuestRewardEquipAutomation_OnQuestLootReceived
+        features.QuestRewardEquipAutomation.eventHandlers.onQuestLootReceived
     },
     PLAYER_EQUIPMENT_CHANGED = {
-        addonTable.QuestRewardEquipAutomation_OnPlayerEquipmentChanged
+        features.QuestRewardEquipAutomation.eventHandlers.onPlayerEquipmentChanged
     },
     PLAYER_TARGET_CHANGED = {
-        addonTable.QuestEmoteAutomation_OnPlayerTargetChanged
+        features.QuestEmoteAutomation.eventHandlers.onPlayerTargetChanged
     },
     CHAT_MSG_MONSTER_SAY = {
-        addonTable.QuestEmoteAutomation_OnChatMsgMonsterSay
+        features.QuestEmoteAutomation.eventHandlers.onChatMsgMonsterSay
     },
     PLAY_MOVIE = {
-        addonTable.SkipCutscenes_OnPlayMovie
+        features.SkipCutscenes.eventHandlers.onPlayMovie
     },
     MAIL_INBOX_UPDATE = {
-        addonTable.MailboxAutomation_OnMailInboxUpdate
+        features.MailboxAutomation.eventHandlers.onMailInboxUpdate
     },
     MAIL_SHOW = {
-        addonTable.MailboxAutomation_OnMailShow
+        features.MailboxAutomation.eventHandlers.onMailShow
     },
     GROUP_JOINED = {
-        addonTable.QuestSharingAutomation_OnGroupJoined
+        features.QuestSharingAutomation.eventHandlers.onGroupJoined
     },
     GROUP_LEFT = {
-        addonTable.QuestSharingAutomation_OnGroupLeft
+        features.QuestSharingAutomation.eventHandlers.onGroupLeft
     },
     GROUP_ROSTER_UPDATE = {
-        addonTable.QuestSharingAutomation_OnGroupRosterUpdate
+        features.QuestSharingAutomation.eventHandlers.onGroupRosterUpdate
     },
     CHAT_MSG_SYSTEM = {
-        addonTable.QuestSharingAutomation_OnChatMsgSystem
+        features.QuestSharingAutomation.eventHandlers.onChatMsgSystem
     },
 }
 
@@ -209,62 +199,58 @@ local eventHandlers = {
 }
 local updateHandlers = {}
 
-local function addEventHandlers(featureName, events)
-    for i, v in ipairs(events) do
-        local event, unit = unpack(v)
-        -- example: The strings QuestAndDialogAutomation and QUEST_REMOVED become the function QuestAndDialogAutomation_OnQuestRemoved
-        local handlerName = featureName .. "_On" .. event:gsub("_", " "):lower():gsub("(%l)(%w*)", function(a,b) return supper(a)..b end):gsub(" ", "")
-        local newEventHandler = addonTable[handlerName]
+local poliQuestEventHandler = CreateFrame("Frame", "PoliQuestEventHandler")
+
+local function addEventHandlers(featureEventHandlers)
+    for name, handler in pairs(featureEventHandlers) do
+        local event, unit = ssplit(" ", ((name:gsub("%u","_%1"):sub(4):upper():gsub("__", " "))))
         local eventHandlerSet = eventHandlers[event]
         if not eventHandlerSet then
-            eventHandlers[event] = { newEventHandler }
+            eventHandlers[event] = { handler }
             if not unit then
-                addonTable.EventHandler:RegisterEvent(event)
+                poliQuestEventHandler:RegisterEvent(event)
             else
-                addonTable.EventHandler:RegisterUnitEvent(event, unit)
+                poliQuestEventHandler:RegisterUnitEvent(event, slower(unit))
             end
         else
             local j = 1
             while eventHandlerSet[j] do
                 -- if handler should be before the current one, then insert at this index
-                if constantEventHandlers[event][j] == newEventHandler and eventHandlerSet[j] ~= newEventHandler then
-                    tinsert(eventHandlerSet, j, newEventHandler)
+                if constantEventHandlers[event][j] == handler and eventHandlerSet[j] ~= handler then
+                    tinsert(eventHandlerSet, j, handler)
                     break
                 -- do nothing if handler is already inserted
-                elseif eventHandlerSet[j] == newEventHandler then
+                elseif eventHandlerSet[j] == handler then
                     break
                 end
                 j = j + 1
             end
             if j == #eventHandlerSet + 1 then
-                tinsert(eventHandlerSet, newEventHandler)
+                tinsert(eventHandlerSet, handler)
             end
         end
     end
 end
 
-local function removeEventHandlers(featureName, events)
-    for i, v in ipairs(events) do
-        local event = unpack(v)
-        -- example: The strings QuestAndDialogAutomation and QUEST_REMOVED become the function QuestAndDialogAutomation_OnQuestRemoved
-        local eventHandlerToRemove = addonTable[featureName .. "_On" .. event:gsub("_", " "):lower():gsub("(%l)(%w*)", function(a,b) return supper(a)..b end):gsub(" ", "")]
+local function removeEventHandlers(featureEventHandlers)
+    for name, handler in pairs(featureEventHandlers) do
+        local event = ssplit(" ", ((name:gsub("%u","_%1"):sub(4):upper():gsub("__", " "))))
         local eventHandlerSet = eventHandlers[event]
         if eventHandlerSet then
             for j, handlerFunction in ipairs(eventHandlerSet) do
-                if eventHandlerSet[j] == eventHandlerToRemove then
+                if handlerFunction == handler then
                     tremove(eventHandlerSet, j)
                 end
             end
             if #eventHandlerSet == 0 then
                 eventHandlers[event] = nil
-                addonTable.EventHandler:UnregisterEvent(event)
+                poliQuestEventHandler:UnregisterEvent(event)
             end
         end
     end
 end
 
-local function addUpdateHandler(featureName)
-    local newUpdateHandler = addonTable[featureName].onUpdate
+local function addUpdateHandler(newUpdateHandler)
     local handlerFound = false
     for _, updateHandler in ipairs(updateHandlers) do
         if updateHandler == newUpdateHandler then
@@ -277,8 +263,7 @@ local function addUpdateHandler(featureName)
     end
 end
 
-local function removeUpdateHandler(featureName)
-    local updateHandlerToRemove = addonTable[featureName].onUpdate
+local function removeUpdateHandler(updateHandlerToRemove)
     for i, updateHandler in ipairs(updateHandlers) do
         if updateHandler == updateHandlerToRemove then
             tremove(updateHandlers, i)
@@ -286,26 +271,27 @@ local function removeUpdateHandler(featureName)
     end
 end
 
-function addonTable.updateFeatureConfiguration(featureName, isEnabled)
+local function updateFeatureConfiguration(featureName, featureTable, isEnabled)
+    local updateHandler = featureTable.updateHandler
     if isEnabled then
-        addEventHandlers(featureName, addonTable[featureName].events)
-        addonTable[featureName].initialize()
-        if addonTable[featureName].onUpdate then
-            addUpdateHandler(featureName)
+        addEventHandlers(featureTable.eventHandlers)
+        featureTable.initialize()
+        if updateHandler then
+            addUpdateHandler(updateHandler)
         end
     else
-        addonTable[featureName].terminate()
-        if addonTable[featureName].onUpdate then
-            removeUpdateHandler(featureName)
+        featureTable.terminate()
+        if updateHandler then
+            removeUpdateHandler(updateHandler)
         end
-        removeEventHandlers(featureName, addonTable[featureName].events)
+        removeEventHandlers(featureTable.eventHandlers)
     end
     PoliSavedVars[featureName].enabled = isEnabled
 end
 
-function addonTable.updateFeatureSwitch(featureName, switchName, isEnabled)
-    addonTable[featureName].setSwitch(switchName, isEnabled)
-    PoliSavedVars[featureName].switches[switchName] = isEnabled
+local function updateFeatureSwitch(featureName, featureTable, switchName, switchValue)
+    featureTable.setSwitch(switchName, switchValue)
+    PoliSavedVars[featureName].switches[switchName] = switchValue
 end
 
 local function PoliQuest_OnEvent(self, event, ...)
@@ -321,18 +307,20 @@ local function PoliQuest_OnUpdate()
     end
 end
 
-local poliQuestEventHandler = CreateFrame("Frame", "PoliQuestEventHandler")
 poliQuestEventHandler:SetScript("OnEvent", PoliQuest_OnEvent)
 poliQuestEventHandler:SetScript("OnUpdate", PoliQuest_OnUpdate)
 poliQuestEventHandler:RegisterEvent("ADDON_LOADED")
 poliQuestEventHandler:RegisterEvent("PLAYER_LOGOUT")
-addonTable.EventHandler = poliQuestEventHandler
 
 SLASH_PoliQuest1 = "/poliquest"
 SLASH_PoliQuest2 = "/pq"
 
-addonTable.tooltip = CreateFrame("GameTooltip", "PoliScanningTooltip", nil, "GameTooltipTemplate")
-addonTable.tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+addonTable.util = addonTable.util or {}
+addonTable.util.updateFeatureConfiguration = updateFeatureConfiguration
+addonTable.util.updateFeatureSwitch = updateFeatureSwitch
+
+addonTable.util.tooltip = CreateFrame("GameTooltip", "PoliScanningTooltip", nil, "GameTooltipTemplate")
+addonTable.util.tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
 local configMenu
 SlashCmdList["PoliQuest"] = function(msg)
@@ -342,7 +330,7 @@ SlashCmdList["PoliQuest"] = function(msg)
             configMenu.frame:SetClampedToScreen(false)
             configMenu:Hide()
         else
-            configMenu = addonTable.createMenu()
+            configMenu = addonTable.util.createMenu()
         end
     elseif cmd == "toggle" then
         if InCombatLockdown() then

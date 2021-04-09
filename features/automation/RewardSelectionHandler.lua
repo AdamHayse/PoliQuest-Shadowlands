@@ -2,14 +2,23 @@ local _, addonTable = ...
 
 local slower, tinsert = string.lower, table.insert
 
+local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
+
+local feature = {}
+
+local DEBUG_QUEST_REWARD_SELECTION_HANDLER
+function feature.setDebug(enabled)
+    DEBUG_QUEST_REWARD_SELECTION_HANDLER = enabled
+end
+function feature.isDebug()
+    return DEBUG_QUEST_REWARD_SELECTION_HANDLER
+end
+
 local function debugPrint(text)
     if DEBUG_QUEST_REWARD_SELECTION_HANDLER then
         print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
     end
 end
-
-local questNames = addonTable.questNames
-local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
 
 local localizedPrimaryStat = {
     ITEM_MOD_STRENGTH_SHORT = ITEM_MOD_STRENGTH_SHORT,
@@ -22,7 +31,7 @@ local function collectItemStats(lootSpecPrimaryStatConstant, itemInfoArray)
     for _, info in ipairs(itemInfoArray) do
         GetItemStats(info.itemLink, info)
         if not info[lootSpecPrimaryStatConstant] then
-            local scanningTooltip = addonTable.tooltip
+            local scanningTooltip = addonTable.util.tooltip
             scanningTooltip:ClearLines()
             scanningTooltip:SetHyperlink(info.itemLink)
             for i=1, scanningTooltip:NumLines() do
@@ -402,7 +411,7 @@ end
 
 local function upgradePostProcessing(questRewardInfo)
     local maxScore = questRewardInfo[1].score
-    local maxScoreIndex = questRewardInfo[1].info
+    local maxScoreIndex = questRewardInfo[1].index
     for i=2,#questRewardInfo do
         if questRewardInfo[i].score > maxScore then
             maxScore = questRewardInfo[i].score
@@ -435,21 +444,17 @@ local function getQuestRewardChoice()
     end
 end
 
-function addonTable.QuestRewardSelectionAutomation_OnQuestComplete()
-    if QuestInfoTitleHeader ~= nil then
-        debugPrint("QuestInfoTitleHeader shown: true")
-    else
-        debugPrint("QuestInfoTitleHeader shown: false")
-    end
+feature.eventHandlers = {}
+
+function feature.eventHandlers.onQuestComplete()
+    debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
     if QuestInfoTitleHeader then
         debugPrint(QuestInfoTitleHeader:GetText())
-        if questNames[slower(QuestInfoTitleHeader:GetText())] then
-            if GetNumQuestChoices() > 1 then
-                local questRewardIndex = getQuestRewardChoice()
-                if questRewardIndex then
-                    debugPrint("questRewardIndex: "..questRewardIndex)
-                    GetQuestReward(questRewardIndex)
-                end
+        if GetNumQuestChoices() > 1 then
+            local questRewardIndex = getQuestRewardChoice()
+            if questRewardIndex then
+                debugPrint("questRewardIndex: "..questRewardIndex)
+                GetQuestReward(questRewardIndex)
             end
         end
     end
@@ -461,20 +466,15 @@ end
 local function terminate()
 end
 
-local questRewardSelectionAutomation = {}
-questRewardSelectionAutomation.name = "QuestRewardSelectionAutomation"
-questRewardSelectionAutomation.events = {
-    { "QUEST_COMPLETE" }
-}
-
-questRewardSelectionAutomation.initialize = initialize
-questRewardSelectionAutomation.terminate = terminate
-function questRewardSelectionAutomation.setSwitch(switchName, value)
+feature.initialize = initialize
+feature.terminate = terminate
+function feature.setSwitch(switchName, value)
     debugPrint(switchName .. " set to " .. value)
     if switchName == "IlvlThreshold" then
         IlvlThreshold = tonumber(value)
     elseif switchName == "SelectionLogic" then
-        SelectionLogic = value
+        SelectionLogic = value == 1 and "Dumb" or (value == 2 and "Pawn" or nil)
     end
 end
-addonTable[questRewardSelectionAutomation.name] = questRewardSelectionAutomation
+addonTable.features = addonTable.features or {}
+addonTable.features.QuestRewardSelectionAutomation = feature
