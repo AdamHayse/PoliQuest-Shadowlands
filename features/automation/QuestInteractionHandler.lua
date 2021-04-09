@@ -138,7 +138,7 @@ function feature.eventHandlers.onQuestLogUpdate()
         debugPrint("numAutoQuestPopUps "..num)
         for i=1,num do
             local questID = GetAutoQuestPopUp(i)
-            debugPrint(i .. " " .. questIDToName[questID])
+            debugPrint("questID: " .. questID)
             AutoQuestPopUpTracker_OnMouseDown(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID))
         end
         debugPrint("QuestInteractionAutomation - Exiting onQuestLogUpdate")
