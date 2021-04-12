@@ -100,7 +100,7 @@ the equip slots that these quest rewards would equip over. Then, it finds the gr
 quest reward and the item in the corresponding equip slot, and selects that item as the quest reward.
 
 The score is calculated by giving primary stats a value of 2 and seconary stats a value of 1. For example, if a piece of gear  
-had 7 primary stat, 8 crit, and 7 mastery, then it would have a score of 2 * 7 + 8 + 7 = 29.  There is no value placed on  
+has 7 primary stat, 8 crit, and 7 mastery, then it will have a score of 2 * 7 + 8 + 7 = 29.  There is no value placed on  
 stamina unless the items being compared do not have primary or secondary stats.  There is also no value placed on  
 armor unless the items being compared do not have primary stats, secondary stats, or stamina.
 
@@ -257,7 +257,7 @@ Boots of the Gilded Path
 </details></blockquote>
 
 On a final note, the reward detection logic for this feature isn't up to date with the most recent quest reward selection  
-logic changes. It works off of item level rather than stats and Pawn selection logic is not an option here. I will probably  
+logic changes. It works off of item level rather than stats, and Pawn selection logic is not an option here. I will probably  
 make changes to this logic in the future.
 </details>
 
@@ -355,6 +355,8 @@ time. However, the mailbox can be abused to store multiple Cracked Radinax Contr
 
 If a new expansion comes out and I have access to the beta, then I will probably develop this feature further to allow  
 players to more easily load the mailbox with these gems for speed leveling practice.
+
+This feature is disabled by default.
 </details></blockquote>
 </details>
 
