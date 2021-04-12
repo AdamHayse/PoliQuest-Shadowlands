@@ -8,7 +8,7 @@ local GetActiveQuests, SelectActiveQuest, GISelectActiveQuest, GetAvailableQuest
 local GetNumActiveQuests, GetActiveTitle, GetNumAvailableQuests, GetAvailableQuestInfo = GetNumActiveQuests, GetActiveTitle, GetNumAvailableQuests, GetAvailableQuestInfo
 local AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAutoQuestPopUps, GetAutoQuestPopUp = AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAutoQuestPopUps, GetAutoQuestPopUp
 local QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame = QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame
-local AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE = AutoQuestPopUpTracker_OnMouseDown, CAMPAIGN_QUEST_TRACKER_MODULE
+local AutoQuestPopUpTracker_OnMouseUp, CAMPAIGN_QUEST_TRACKER_MODULE = AutoQuestPopUpTracker_OnMouseUp, CAMPAIGN_QUEST_TRACKER_MODULE
 
 local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
 
@@ -139,7 +139,7 @@ function feature.eventHandlers.onQuestLogUpdate()
         for i=1,num do
             local questID = GetAutoQuestPopUp(i)
             debugPrint("questID: " .. questID)
-            AutoQuestPopUpTracker_OnMouseDown(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID))
+            AutoQuestPopUpTracker_OnMouseUp(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID), "LeftButton", true)
         end
         debugPrint("QuestInteractionAutomation - Exiting onQuestLogUpdate")
     end
