@@ -203,7 +203,7 @@ local function drawAutomationTab(container)
     local IlvlThreshHoldEditBox = createSwitchEditBox(container, "Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", 150)
     container:AddChild(IlvlThreshHoldEditBox)
 
-    local RewardSelectionLogicDropdown = createSwitchDropdown(container, "Reward Selection Logic", "QuestRewardSelectionAutomation", "SelectionLogic", {"Dumb", "Pawn"}, 150)
+    local RewardSelectionLogicDropdown = createSwitchDropdown(container, "Reward Selection Logic", "QuestRewardSelectionAutomation", "SelectionLogic", {"Simple Weights", "Pawn Weights", "Item Level", "Vendor Price"}, 150)
     RewardSelectionLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
     container:AddChild(RewardSelectionLogicDropdown)
 

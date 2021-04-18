@@ -28,25 +28,47 @@ local function debugPrint(text)
     end
 end
 
+local questIDBlacklist = {
+    [62061] = true,  -- Prove Your Worth
+    [62059] = true,  -- Prove Your Worth
+    [62043] = true,  -- Prove Your Worth
+    [62060] = true,  -- Prove Your Worth
+
+    [62393] = true,  -- Rebuild Our Trust
+    [62368] = true,  -- Rebuild Our Trust
+    [62389] = true,  -- Rebuild Our Trust
+    [62392] = true,  -- Rebuild Our Trust
+}
+
+local questNameBlacklist = {}
+
 local function onGossipShow()
     local actQuests = GetActiveQuests() or {}
     debugPrint("numActiveQuests: " .. #actQuests)
     for i, v in ipairs(actQuests) do
         if v.isComplete then
-            debugPrint("Selecting index " .. i)
-            SelectActiveQuest(i)
-            GISelectActiveQuest(i)
-            return
+            if not questIDBlacklist[v.questID] then
+                debugPrint("Selecting index " .. i)
+                SelectActiveQuest(i)
+                GISelectActiveQuest(i)
+                return
+            else
+                print("|cFF5c8cc1PoliQuest:|r Active quest \"" .. v.title .. "\" not selected due to blacklisting.")
+            end
         end
     end
 
     local availableQuests = GetAvailableQuests() or {}
     debugPrint("numAvailableQuests: " .. #availableQuests)
     for i, v in ipairs(availableQuests) do
-        debugPrint("Selecting index " .. i)
-        SelectAvailableQuest(i)
-        GISelectAvailableQuest(i)
-        return
+        if not questIDBlacklist[v.questID] then
+            debugPrint("Selecting index " .. i)
+            SelectAvailableQuest(i)
+            GISelectAvailableQuest(i)
+            return
+        else
+            print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. v.title .. "\" not selected due to blacklisting.")
+        end
     end
 end
 
@@ -63,24 +85,33 @@ function feature.eventHandlers.onQuestGreeting()
     local numActiveQuests = GetNumActiveQuests()
     debugPrint("numActiveQuests: " .. numActiveQuests)
     for i=1, numActiveQuests do
-        local _, isComplete = GetActiveTitle(i)
+        local title, isComplete = GetActiveTitle(i)
         if isComplete then
-            debugPrint("Selecting index " .. i)
-            SelectActiveQuest(i)
-            GISelectActiveQuest(i)
-            debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
-            return
+            if not questNameBlacklist[title] then
+                debugPrint("Selecting quest: " .. title)
+                SelectActiveQuest(i)
+                GISelectActiveQuest(i)
+                debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
+                return
+            else
+                print("|cFF5c8cc1PoliQuest:|r Active quest \"" .. title .. "\" not selected due to blacklisting.")
+            end
         end
     end
 
     local numAvailableQuests = GetNumAvailableQuests()
     debugPrint("numAvailableQuests: " .. numAvailableQuests)
     for i=1, numAvailableQuests do
-        debugPrint("Selecting index " .. i)
-        SelectAvailableQuest(i)
-        GISelectAvailableQuest(i)
-        debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
-        return
+        local title = GetAvailableTitle(i)
+        if not questNameBlacklist[title] then
+            debugPrint("Selecting quest: " .. title)
+            SelectAvailableQuest(i)
+            GISelectAvailableQuest(i)
+            debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
+            return
+        else
+            print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
+        end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
 end
@@ -89,9 +120,14 @@ function feature.eventHandlers.onQuestDetail()
     debugPrint("QuestInteractionAutomation - Entering onQuestDetail")
     debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
     if QuestInfoTitleHeader then
-        debugPrint("QuestInfoTitleHeader: ".. (QuestInfoTitleHeader:GetText() or "nil"))
-        if QuestInfoTitleHeader:GetText() and QuestInfoTitleHeader:GetText() ~= "" then
-            AcceptQuest()
+        local title = QuestInfoTitleHeader:GetText()
+        debugPrint("QuestInfoTitleHeader: ".. (title or "nil"))
+        if title and title ~= "" then
+            if not questNameBlacklist[title] then
+                AcceptQuest()
+            else
+                print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
+            end
         else
             debugPrint("Quest detail visible without title header text. Attempting close.")
             QuestFrame:Hide()
@@ -104,14 +140,19 @@ function feature.eventHandlers.onQuestProgress()
     debugPrint("QuestInteractionAutomation - Entering onQuestProgress")
     debugPrint("QuestProgressTitleText shown: " .. tostring(not not QuestProgressTitleText))
     if QuestProgressTitleText then
-        debugPrint("QuestProgressTitleText: " .. QuestProgressTitleText:GetText())
-        local questCompletable = IsQuestCompletable()
-        debugPrint("IsQuestCompletable: " .. tostring(not not questCompletable))
-        if questCompletable then
-            CompleteQuest()
+        local title = QuestProgressTitleText:GetText()
+        if not questNameBlacklist[title] then
+            debugPrint("QuestProgressTitleText: " .. title)
+            local questCompletable = IsQuestCompletable()
+            debugPrint("IsQuestCompletable: " .. tostring(not not questCompletable))
+            if questCompletable then
+                CompleteQuest()
+            else
+                debugPrint("QuestFrame visible and nothing to do. Attempting close.")
+                QuestFrame:Hide()
+            end
         else
-            debugPrint("QuestFrame visible and nothing to do. Attempting close.")
-            QuestFrame:Hide()
+            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestProgress")
@@ -121,11 +162,16 @@ function feature.eventHandlers.onQuestComplete()
     debugPrint("QuestInteractionAutomation - Entering onQuestComplete")
     debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
     if QuestInfoTitleHeader then
-        debugPrint("QuestInfoTitleHeader" .. QuestInfoTitleHeader:GetText())
-        local numQuestChoices = GetNumQuestChoices()
-        debugPrint("numQuestChoices: " .. numQuestChoices)
-        if numQuestChoices <= 1 then
-            GetQuestReward(1)
+        local title = QuestInfoTitleHeader:GetText()
+        if not questNameBlacklist[title] then
+            debugPrint("QuestInfoTitleHeader" .. title)
+            local numQuestChoices = GetNumQuestChoices()
+            debugPrint("numQuestChoices: " .. numQuestChoices)
+            if numQuestChoices <= 1 then
+                GetQuestReward(1)
+            end
+        else
+            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestComplete")
@@ -161,7 +207,20 @@ function feature.eventHandlers.onQuestAccepted()
     debugPrint("QuestInteractionAutomation - Exiting onQuestAccepted")
 end
 
+function feature.eventHandlers.onQuestDataLoadResult(questID, success)
+    if questIDBlacklist[questID] then
+        if success then
+            questNameBlacklist[C_QuestLog.GetTitleForQuestID(questID)] = true
+        else
+            print("|cFF5c8cc1PoliQuest[WARNING]:|r Quest name for quest ID " .. questID .. " failed to load. Quest Interaction Automation for this quest may not be prevented.")
+        end
+    end
+end
+
 local function initialize()
+    for questID in pairs(questIDBlacklist) do
+        C_QuestLog.RequestLoadQuestByID(questID)
+    end
 end
 
 local function terminate()

@@ -44,7 +44,35 @@ local function collectItemStats(lootSpecPrimaryStatConstant, itemInfoArray)
     end
 end
 
+local function calculateMostValuableItemIndex(questRewardInfo)
+    for _, info in ipairs(questRewardInfo) do
+        info.score = select(11, GetItemInfo(info.itemLink))
+        debugPrint("Vendor score for reward at index " .. info.index .. ": " .. info.score)
+    end
+end
+
+local function calculatePotentialUpgradesItemLevel(questRewardInfo)
+    local questRewardItemLevel = GetDetailedItemLevelInfo(questRewardInfo[1].itemLink)
+    debugPrint("Item Level score for quest rewards: " .. questRewardItemLevel)
+    for _, info in ipairs(questRewardInfo) do
+        local equipSlotItemLevel
+        if #equipSlotLocItemInfo == 1 then
+            equipSlotItemLevel = GetDetailedItemLevelInfo(info.equipSlotLocItemInfo[1].itemLink) or 0
+        else
+            local score1 = GetDetailedItemLevelInfo(info.equipSlotLocItemInfo[1].itemLink) or 0
+            local score2 = GetDetailedItemLevelInfo(info.equipSlotLocItemInfo[2].itemLink) or 0
+            equipSlotItemLevel =  score1 < score2 and score1 or score2
+        end
+        debugPrint("Item Level score for weakest piece of type ".. info.itemEquipLoc .. ": ".. equipSlotItemLevel)
+        info.score = questRewardItemLevel - equipSlotItemLevel
+        debugPrint("Item Level score result for quest reward at index " .. info.index .. ": " .. info.score)
+    end
+end
+
 local function calculateStatScore(lootSpecPrimaryStatConstant, info)
+    if info == nil then
+        return 0
+    end
     local primary = info[lootSpecPrimaryStatConstant] or 0
     local crit = info.ITEM_MOD_CRIT_RATING_SHORT or 0
     local mastery = info.ITEM_MOD_MASTERY_RATING_SHORT or 0
@@ -69,11 +97,12 @@ local function calculateStatScoreDifferences(questRewardInfo)
     local lootSpecPrimaryStatConstant = questRewardInfo.lootSpecPrimaryStatConstant
     for _, info in ipairs(questRewardInfo) do
         local rewardScore = calculateStatScore(lootSpecPrimaryStatConstant, info)
-        debugPrint("Stat score for reward at index ".. info.index .. ": ".. rewardScore)
+        debugPrint("Simple Weights stat score for reward at index ".. info.index .. ": ".. rewardScore)
         if rewardScore ~= 0 then
             local weakestPieceStatScore = calculateWeakestPieceStatScore(lootSpecPrimaryStatConstant, info.equipSlotLocItemInfo)
-            debugPrint("Stat score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPieceStatScore)
+            debugPrint("Simple Weights stat score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPieceStatScore)
             info.score = rewardScore - weakestPieceStatScore
+            debugPrint("Simple Weights stat score result for quest reward at index " .. info.index .. ": " .. info.score)
             statsExist = true
         end
     end
@@ -98,11 +127,12 @@ local function calculateStamScoreDifferences(questRewardInfo)
     local stamExists = false
     for _, info in ipairs(questRewardInfo) do
         local rewardScore = calculateStamScore(info)
-        debugPrint("Stam score for reward at index ".. info.index .. ": ".. rewardScore)
+        debugPrint("Simple Weights stam score for reward at index ".. info.index .. ": ".. rewardScore)
         if rewardScore ~= 0 then
             local weakestPieceStamScore = calculateWeakestPieceStamScore(info.equipSlotLocItemInfo)
-            debugPrint("Stam score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPieceStamScore)
+            debugPrint("Simple Weights stam score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPieceStamScore)
             info.score = rewardScore - weakestPieceStamScore
+            debugPrint("Simple Weights stam score result for quest reward at index " .. info.index .. ": " .. info.score)
             stamExists = true
         end
     end
@@ -127,11 +157,12 @@ local function calculateArmorScoreDifferences(questRewardInfo)
     local armorExists = false
     for _, info in ipairs(questRewardInfo) do
         local rewardScore = calculateArmorScore(info)
-        debugPrint("Armor score for reward at index ".. info.index .. ": ".. rewardScore)
+        debugPrint("Simple Weights armor score for reward at index ".. info.index .. ": ".. rewardScore)
         if rewardScore ~= 0 then
             local weakestPieceArmorScore = calculateWeakestPieceArmorScore(info.equipSlotLocItemInfo)
-            debugPrint("Armor score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPieceArmorScore)
+            debugPrint("Simple Weights armor score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPieceArmorScore)
             info.score = rewardScore - weakestPieceArmorScore
+            debugPrint("Simple Weights armor score result for quest reward at index " .. info.index .. ": " .. info.score)
             armorExists = true
         end
     end
@@ -284,46 +315,55 @@ end
 
 local IlvlThreshold
 local function shouldAbortRewardAutomation(questRewardInfo)
-    if not allQuestItemsAreEquippable(questRewardInfo) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items that are not equippable.")
-        return true
-    end
-    if getQuestItemIlvl(questRewardInfo) > IlvlThreshold then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items above ilvl threshold.")
-        return true
+    debugPrint("SelectionLogic = " .. (SelectionLogic or "nil"))
+    if SelectionLogic ~= "Vendor Price" then
+        if not allQuestItemsAreEquippable(questRewardInfo) then
+            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items that are not equippable.")
+            return true
+        end
+        local questItemIlvl = getQuestItemIlvl(questRewardInfo)
+        if questItemIlvl > IlvlThreshold then
+            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items above ilvl threshold.")
+            return true
+        end
+
+        setLootSpecInfo(questRewardInfo)
+        filterSpecItems(questRewardInfo)
+
+        if #questRewardInfo == 0 then
+            if GetSpecialization() == 5 then
+                print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no class specialization. Set loot specialization to remove this check while lower than level 10.")
+            else
+                print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no items for your current loot specialization.")
+            end
+            return true
+        elseif #questRewardInfo == 1 then
+            debugPrint("Only one spec item. Exiting shouldAbortRewardAutomation.")
+            return false
+        end
+
+        collectItemStats(questRewardInfo.lootSpecPrimaryStatConstant, questRewardInfo)
+
+        -- WRONG ARMOR SPEC CHECK
+        -- check if it's a boe
+        if missingItem(questRewardInfo) and questItemIlvl > 50 then
+            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to item missing from equip slot.")
+            return true
+        end
+        if socketExists(questRewardInfo) then
+            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to reward with socket.")
+            return true
+        end
+        if trinketExists(questRewardInfo) then
+            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to trinket reward.")
+            return true
+        end
+        if weaponExists(questRewardInfo) then
+            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to weapon reward.")
+            return true
+        end
     end
 
-    setLootSpecInfo(questRewardInfo)
-    filterSpecItems(questRewardInfo)
-
-    if #questRewardInfo == 0 then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no items for your current loot specialization.")
-        return true
-    elseif #questRewardInfo == 1 then
-        debugPrint("Only one spec item. Exiting shouldAbortRewardAutomation.")
-        return false
-    end
-
-    collectItemStats(questRewardInfo.lootSpecPrimaryStatConstant, questRewardInfo)
-
-    -- WRONG ARMOR SPEC CHECK
-    -- check if it's a boe
-    if missingItem(questRewardInfo) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to item missing from equip slot.")
-        return true
-    end
-    if socketExists(questRewardInfo) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to reward with socket.")
-        return true
-    end
-    if trinketExists(questRewardInfo) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to trinket reward.")
-        return true
-    end
-    if weaponExists(questRewardInfo) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to weapon reward.")
-        return true
-    end
     if shirtExists(questRewardInfo) then
         print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to shirt reward.")
         return true
@@ -395,11 +435,17 @@ local function calculatePotentialUpgradesPawn(questRewardInfo)
         local lootSpecPrimaryStatConstant = questRewardInfo.lootSpecPrimaryStatConstant
         for _, info in ipairs(questRewardInfo) do
             local rewardScore = PawnGetSingleValueFromItem(PawnGetItemData(info.itemLink), scaleName)
-            debugPrint("Pawn score for reward at index ".. info.index .. ": ".. rewardScore)
+            debugPrint("Pawn Weights score for reward at index ".. info.index .. ": ".. rewardScore)
             if rewardScore and rewardScore ~= 0 then
-                local weakestPiecePawnScore = calculateWeakestPiecePawnScore(info.equipSlotLocItemInfo, scaleName)
-                debugPrint("Pawn score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPiecePawnScore)
-                info.score = rewardScore - weakestPiecePawnScore
+                if #info.equipSlotLocItemInfo == 0 or #info.equipSlotLocItemInfo ~= 2 and info.itemEquipLoc == "INVTYPE_FINGER" then 
+                    debugPrint("Missing piece of type ".. info.itemEquipLoc)
+                    info.score = rewardScore
+                else
+                    local weakestPiecePawnScore = calculateWeakestPiecePawnScore(info.equipSlotLocItemInfo, scaleName)
+                    debugPrint("Pawn Weights score for weakest piece of type ".. info.itemEquipLoc .. ": ".. weakestPiecePawnScore)
+                    info.score = rewardScore - weakestPiecePawnScore
+                end
+                debugPrint("Pawn Weights score result for quest reward at index " .. info.index .. ": " .. info.score)
             else
                 debugPrint("Pawn failed to calculate item value for quest reward at index " .. info.index)
                 return false
@@ -427,26 +473,34 @@ local function getQuestRewardChoice()
         return
     end
     
-    if #questRewardInfo == 1 then
+    if SelectionLogic == "Vendor Price" then
+        debugPrint("Executing Vendor Price selection logic.")
+        calculateMostValuableItemIndex(questRewardInfo)
+    elseif #questRewardInfo == 1 then
         debugPrint("Only one spec item. Select reward at index " .. questRewardInfo[1].index)
         return questRewardInfo[1].index
     else
+        if SelectionLogic == "Item Level" then
+            debugPrint("Executing Item Level selection logic.")
+            calculatePotentialUpgradesItemLevel(questRewardInfo)
+        end
         local pawnSuccess
-        if SelectionLogic == "Pawn" then
-            debugPrint("Executing selection logic with Pawn weights.")
+        if SelectionLogic == "Pawn Weights" then
+            debugPrint("Executing Pawn Weights selection logic.")
             pawnSuccess = calculatePotentialUpgradesPawn(questRewardInfo)
         end
-        if SelectionLogic == "Dumb" or not pawnSuccess then
-            debugPrint("Executing selection logic with dumb weights.")
+        if SelectionLogic == "Simple Weights" or SelectionLogic == "Pawn Weights" and not pawnSuccess then
+            debugPrint("Executing Simple Weights selection logic.")
             calculatePotentialUpgradesDumb(questRewardInfo)
         end
-        return upgradePostProcessing(questRewardInfo)
     end
+    return upgradePostProcessing(questRewardInfo)
 end
 
 feature.eventHandlers = {}
 
 function feature.eventHandlers.onQuestComplete()
+    debugPrint("QuestRewardSelectionAutomation - Entering onQuestComplete")
     debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
     if QuestInfoTitleHeader then
         debugPrint(QuestInfoTitleHeader:GetText())
@@ -458,6 +512,7 @@ function feature.eventHandlers.onQuestComplete()
             end
         end
     end
+    debugPrint("QuestRewardSelectionAutomation - Exiting onQuestComplete")
 end
 
 local function initialize()
@@ -473,7 +528,7 @@ function feature.setSwitch(switchName, value)
     if switchName == "IlvlThreshold" then
         IlvlThreshold = tonumber(value)
     elseif switchName == "SelectionLogic" then
-        SelectionLogic = value == 1 and "Dumb" or (value == 2 and "Pawn" or nil)
+        SelectionLogic = value == 1 and "Simple Weights" or (value == 2 and "Pawn Weights" or (value == 3 and "Item Level" or (value == 4 and "Vendor Price" or nil)))
     end
 end
 addonTable.features = addonTable.features or {}

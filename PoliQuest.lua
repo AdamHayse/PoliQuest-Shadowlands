@@ -36,7 +36,6 @@ local function PoliQuest_OnAddonLoaded(addonName)
         savedVars.QuestInteractionAutomation = {}
         savedVars.QuestInteractionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.enabled) == "boolean", PoliSavedVars.QuestInteractionAutomation.enabled, true)
 
-        -- does this only work if the table is cloned?
         PoliSavedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
         savedVars.QuestRewardSelectionAutomation = {}
         savedVars.QuestRewardSelectionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.enabled) == "boolean", PoliSavedVars.QuestRewardSelectionAutomation.enabled, true)
@@ -190,6 +189,9 @@ local constantEventHandlers = {
     CHAT_MSG_SYSTEM = {
         features.QuestSharingAutomation.eventHandlers.onChatMsgSystem
     },
+    QUEST_DATA_LOAD_RESULT = {
+        features.QuestInteractionAutomation.eventHandlers.onQuestDataLoadResult
+    }
 }
 
 -- will be populated with events and corresponding handlers when addon is loaded
