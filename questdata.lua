@@ -38,6 +38,27 @@ addonTable.data.innWhitelist = {
     ["Host Ta'rela"] = true
 }
 
+addonTable.data.questNameBlacklist = {}
+
+addonTable.data.questIDBlacklist = {
+    [62061] = true,  -- Prove Your Worth
+    [62059] = true,  -- Prove Your Worth
+    [62043] = true,  -- Prove Your Worth
+    [62060] = true,  -- Prove Your Worth
+    [62393] = true,  -- Rebuild Our Trust
+    [62368] = true,  -- Rebuild Our Trust
+    [62389] = true,  -- Rebuild Our Trust
+    [62392] = true,  -- Rebuild Our Trust
+    [60250] = true,  -- A Valuable Find: Theater of Pain
+    [60251] = true,  -- A Valuable Find: Plaguefall
+    [60252] = true,  -- A Valuable Find: Spires of Ascension
+    [60253] = true,  -- A Valuable Find: Necrotic Wake
+    [60254] = true,  -- A Valuable Find: Tirna Scithe
+    [60255] = true,  -- A Valuable Find: De Other Side
+    [60256] = true,  -- A Valuable Find: Halls of Atonement
+    [60257] = true,  -- A Valuable Find: Sanguine Depths
+}
+
 addonTable.data.itemEquipLocToEquipSlot = {
     ["INVTYPE_AMMO"] = {0},
     ["INVTYPE_HEAD"] = {1},

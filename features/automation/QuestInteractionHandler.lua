@@ -10,7 +10,8 @@ local AcceptQuest, IsQuestCompletable, CompleteQuest, GetQuestReward, GetNumAuto
 local QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame = QuestInfoTitleHeader, QuestProgressTitleText, QuestFrame
 local AutoQuestPopUpTracker_OnMouseUp, CAMPAIGN_QUEST_TRACKER_MODULE = AutoQuestPopUpTracker_OnMouseUp, CAMPAIGN_QUEST_TRACKER_MODULE
 
-local itemEquipLocToEquipSlot = addonTable.itemEquipLocToEquipSlot
+local questIDBlacklist = addonTable.data.questIDBlacklist
+local questNameBlacklist = addonTable.data.questNameBlacklist
 
 local feature = {}
 
@@ -28,17 +29,19 @@ local function debugPrint(text)
     end
 end
 
-local questIDBlacklist = {
-    [62061] = true,  -- Prove Your Worth
-    [62059] = true,  -- Prove Your Worth
-    [62043] = true,  -- Prove Your Worth
-    [62060] = true,  -- Prove Your Worth
-
-    [62393] = true,  -- Rebuild Our Trust
-    [62368] = true,  -- Rebuild Our Trust
-    [62389] = true,  -- Rebuild Our Trust
-    [62392] = true,  -- Rebuild Our Trust
-}
+local Modifier
+local function automationSuppressed()
+    if Modifier == "Alt" then
+        return IsAltKeyDown()
+    elseif Modifier == "Ctrl" then
+        return IsControlKeyDown()
+    elseif Modifier == "Shift" then
+        return IsShiftKeyDown()
+    else
+        debugPrint("Modifier switch not set.")
+        return false
+    end
+end
 
 local questNameBlacklist = {}
 
@@ -76,41 +79,45 @@ feature.eventHandlers = {}
 
 function feature.eventHandlers.onGossipShow()
     debugPrint("QuestInteractionAutomation - Entering onGossipShow")
-    onGossipShow()
+    if not automationSuppressed() then
+        onGossipShow()
+    end
     debugPrint("QuestInteractionAutomation - Exiting onGossipShow")
 end
 
 function feature.eventHandlers.onQuestGreeting()
     debugPrint("QuestInteractionAutomation - Entering onQuestGreeting")
-    local numActiveQuests = GetNumActiveQuests()
-    debugPrint("numActiveQuests: " .. numActiveQuests)
-    for i=1, numActiveQuests do
-        local title, isComplete = GetActiveTitle(i)
-        if isComplete then
+    if not automationSuppressed() then
+        local numActiveQuests = GetNumActiveQuests()
+        debugPrint("numActiveQuests: " .. numActiveQuests)
+        for i=1, numActiveQuests do
+            local title, isComplete = GetActiveTitle(i)
+            if isComplete then
+                if not questNameBlacklist[title] then
+                    debugPrint("Selecting quest: " .. title)
+                    SelectActiveQuest(i)
+                    GISelectActiveQuest(i)
+                    debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
+                    return
+                else
+                    print("|cFF5c8cc1PoliQuest:|r Active quest \"" .. title .. "\" not selected due to blacklisting.")
+                end
+            end
+        end
+
+        local numAvailableQuests = GetNumAvailableQuests()
+        debugPrint("numAvailableQuests: " .. numAvailableQuests)
+        for i=1, numAvailableQuests do
+            local title = GetAvailableTitle(i)
             if not questNameBlacklist[title] then
                 debugPrint("Selecting quest: " .. title)
-                SelectActiveQuest(i)
-                GISelectActiveQuest(i)
+                SelectAvailableQuest(i)
+                GISelectAvailableQuest(i)
                 debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
                 return
             else
-                print("|cFF5c8cc1PoliQuest:|r Active quest \"" .. title .. "\" not selected due to blacklisting.")
+                print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
             end
-        end
-    end
-
-    local numAvailableQuests = GetNumAvailableQuests()
-    debugPrint("numAvailableQuests: " .. numAvailableQuests)
-    for i=1, numAvailableQuests do
-        local title = GetAvailableTitle(i)
-        if not questNameBlacklist[title] then
-            debugPrint("Selecting quest: " .. title)
-            SelectAvailableQuest(i)
-            GISelectAvailableQuest(i)
-            debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
-            return
-        else
-            print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
         end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
@@ -118,19 +125,21 @@ end
 
 function feature.eventHandlers.onQuestDetail()
     debugPrint("QuestInteractionAutomation - Entering onQuestDetail")
-    debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
-    if QuestInfoTitleHeader then
-        local title = QuestInfoTitleHeader:GetText()
-        debugPrint("QuestInfoTitleHeader: ".. (title or "nil"))
-        if title and title ~= "" then
-            if not questNameBlacklist[title] then
-                AcceptQuest()
+    if not automationSuppressed() then
+        debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
+        if QuestInfoTitleHeader then
+            local title = QuestInfoTitleHeader:GetText()
+            debugPrint("QuestInfoTitleHeader: ".. (title or "nil"))
+            if title and title ~= "" then
+                if not questNameBlacklist[title] then
+                    AcceptQuest()
+                else
+                    print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
+                end
             else
-                print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
+                debugPrint("Quest detail visible without title header text. Attempting close.")
+                QuestFrame:Hide()
             end
-        else
-            debugPrint("Quest detail visible without title header text. Attempting close.")
-            QuestFrame:Hide()
         end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestDetail")
@@ -138,21 +147,23 @@ end
 
 function feature.eventHandlers.onQuestProgress()
     debugPrint("QuestInteractionAutomation - Entering onQuestProgress")
-    debugPrint("QuestProgressTitleText shown: " .. tostring(not not QuestProgressTitleText))
-    if QuestProgressTitleText then
-        local title = QuestProgressTitleText:GetText()
-        if not questNameBlacklist[title] then
-            debugPrint("QuestProgressTitleText: " .. title)
-            local questCompletable = IsQuestCompletable()
-            debugPrint("IsQuestCompletable: " .. tostring(not not questCompletable))
-            if questCompletable then
-                CompleteQuest()
+    if not automationSuppressed() then
+        debugPrint("QuestProgressTitleText shown: " .. tostring(not not QuestProgressTitleText))
+        if QuestProgressTitleText then
+            local title = QuestProgressTitleText:GetText()
+            if not questNameBlacklist[title] then
+                debugPrint("QuestProgressTitleText: " .. title)
+                local questCompletable = IsQuestCompletable()
+                debugPrint("IsQuestCompletable: " .. tostring(not not questCompletable))
+                if questCompletable then
+                    CompleteQuest()
+                else
+                    debugPrint("QuestFrame visible and nothing to do. Attempting close.")
+                    QuestFrame:Hide()
+                end
             else
-                debugPrint("QuestFrame visible and nothing to do. Attempting close.")
-                QuestFrame:Hide()
+                print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
             end
-        else
-            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestProgress")
@@ -160,49 +171,55 @@ end
 
 function feature.eventHandlers.onQuestComplete()
     debugPrint("QuestInteractionAutomation - Entering onQuestComplete")
-    debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
-    if QuestInfoTitleHeader then
-        local title = QuestInfoTitleHeader:GetText()
-        if not questNameBlacklist[title] then
-            debugPrint("QuestInfoTitleHeader" .. title)
-            local numQuestChoices = GetNumQuestChoices()
-            debugPrint("numQuestChoices: " .. numQuestChoices)
-            if numQuestChoices <= 1 then
-                GetQuestReward(1)
+    if not automationSuppressed() then
+        debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
+        if QuestInfoTitleHeader then
+            local title = QuestInfoTitleHeader:GetText()
+            if not questNameBlacklist[title] then
+                debugPrint("QuestInfoTitleHeader" .. title)
+                local numQuestChoices = GetNumQuestChoices()
+                debugPrint("numQuestChoices: " .. numQuestChoices)
+                if numQuestChoices <= 1 then
+                    GetQuestReward(1)
+                end
+            else
+                print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
             end
-        else
-            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestComplete")
 end
 
 function feature.eventHandlers.onQuestLogUpdate()
-    local num = GetNumAutoQuestPopUps()
-    if num > 0 then
-        debugPrint("QuestInteractionAutomation - In onQuestLogUpdate")
-        debugPrint("numAutoQuestPopUps "..num)
-        for i=1,num do
-            local questID = GetAutoQuestPopUp(i)
-            debugPrint("questID: " .. questID)
-            AutoQuestPopUpTracker_OnMouseUp(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID), "LeftButton", true)
+    if not automationSuppressed() then
+        local num = GetNumAutoQuestPopUps()
+        if num > 0 then
+            debugPrint("QuestInteractionAutomation - In onQuestLogUpdate")
+            debugPrint("numAutoQuestPopUps "..num)
+            for i=1,num do
+                local questID = GetAutoQuestPopUp(i)
+                debugPrint("questID: " .. questID)
+                AutoQuestPopUpTracker_OnMouseUp(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID), "LeftButton", true)
+            end
+            debugPrint("QuestInteractionAutomation - Exiting onQuestLogUpdate")
         end
-        debugPrint("QuestInteractionAutomation - Exiting onQuestLogUpdate")
     end
 end
 
 function feature.eventHandlers.onQuestAccepted()
     debugPrint("QuestInteractionAutomation - Entering onQuestAccepted")
-    local gossipFrameVisible = GossipFrame:IsVisible()
-    debugPrint("GossipFrame visible: " .. tostring(not not gossipFrameVisible))
-    if GossipFrame:IsVisible() then
-        onGossipShow()
-    end
-    local questFrameVisible = QuestFrame:IsVisible()
-    debugPrint("QuestFrame visible: " .. tostring(not not questFrameVisible))
-    if questFrameVisible then
-        debugPrint("Hiding QuestFrame")
-        QuestFrame:Hide()
+    if not automationSuppressed() then
+        local gossipFrameVisible = GossipFrame:IsVisible()
+        debugPrint("GossipFrame visible: " .. tostring(not not gossipFrameVisible))
+        if GossipFrame:IsVisible() then
+            onGossipShow()
+        end
+        local questFrameVisible = QuestFrame:IsVisible()
+        debugPrint("QuestFrame visible: " .. tostring(not not questFrameVisible))
+        if questFrameVisible then
+            debugPrint("Hiding QuestFrame")
+            QuestFrame:Hide()
+        end
     end
     debugPrint("QuestInteractionAutomation - Exiting onQuestAccepted")
 end
@@ -228,5 +245,11 @@ end
 
 feature.initialize = initialize
 feature.terminate = terminate
+function feature.setSwitch(switchName, value)
+    debugPrint(switchName .. " set to " .. value)
+    if switchName == "Modifier" then
+        Modifier = value == 1 and "Alt" or (value == 2 and "Ctrl" or (value == 3 and "Shift" or nil))
+    end
+end
 addonTable.features = addonTable.features or {}
 addonTable.features.QuestInteractionAutomation = feature

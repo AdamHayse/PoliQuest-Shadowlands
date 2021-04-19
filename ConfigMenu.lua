@@ -33,7 +33,8 @@ end
 
 
 local leftColumnHeight, rightColumnHeight
-local indentLength = 25
+local indentLength = 30
+local featureSpacing = 20
 local function anchorFramesWithDFS(widget, relativeTo, relativePoint, depth, columnHeight)
     local frame = widget.frame
     frame:ClearAllPoints()
@@ -44,7 +45,7 @@ local function anchorFramesWithDFS(widget, relativeTo, relativePoint, depth, col
     columnHeight = columnHeight + frame:GetHeight()
     for _, child in ipairs(widget:GetUserData("children") or {}) do
         local childFrame = child.frame
-        columnHeight = columnHeight + anchorFramesWithDFS(child, relativeTo, relativePoint, depth + 1, columnHeight)
+        columnHeight = anchorFramesWithDFS(child, relativeTo, relativePoint, depth + 1, columnHeight)
     end
     return columnHeight
 end
@@ -55,9 +56,9 @@ local function configLayout(parent, children)
     for i, child in ipairs(children) do
         if child.type == "PoliFeatureCheckBox" then
             if leftColumnHeight <= rightColumnHeight then
-                leftColumnHeight = anchorFramesWithDFS(child, parent, "TOPLEFT", 0, leftColumnHeight)
+                leftColumnHeight = anchorFramesWithDFS(child, parent, "TOPLEFT", 0, leftColumnHeight) + featureSpacing
             else
-                rightColumnHeight = anchorFramesWithDFS(child, parent, "TOP", 0, rightColumnHeight)
+                rightColumnHeight = anchorFramesWithDFS(child, parent, "TOP", 0, rightColumnHeight) + featureSpacing
             end
         end
     end
@@ -207,11 +208,18 @@ local function drawAutomationTab(container)
     RewardSelectionLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
     container:AddChild(RewardSelectionLogicDropdown)
 
+    local RewardSelectionLogicModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestRewardSelectionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
+    container:AddChild(RewardSelectionLogicModifierDropdown)
+
     local QuestRewardSelectionAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Selection Automation", "QuestRewardSelectionAutomation")
-    QuestRewardSelectionAutomationCheckButton:SetUserData("children", { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown })
+    QuestRewardSelectionAutomationCheckButton:SetUserData("children", { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown, RewardSelectionLogicModifierDropdown })
     container:AddChild(QuestRewardSelectionAutomationCheckButton)
 
+    local QuestInterationAutomationModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestInteractionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
+    container:AddChild(QuestInterationAutomationModifierDropdown)
+
     local QuestInteractionAutomationCheckButton = createFeatureCheckBox(container, "Quest Interaction Automation", "QuestInteractionAutomation")
+    QuestInteractionAutomationCheckButton:SetUserData("children", { QuestInterationAutomationModifierDropdown })
     container:AddChild(QuestInteractionAutomationCheckButton)
 
     local DialogInteractionAutomationCheckButton = createFeatureCheckBox(container, "Dialog Interaction Automation", "DialogInteractionAutomation")

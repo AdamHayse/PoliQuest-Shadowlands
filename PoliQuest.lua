@@ -35,6 +35,9 @@ local function PoliQuest_OnAddonLoaded(addonName)
         PoliSavedVars.QuestInteractionAutomation = PoliSavedVars.QuestInteractionAutomation or {}
         savedVars.QuestInteractionAutomation = {}
         savedVars.QuestInteractionAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.enabled) == "boolean", PoliSavedVars.QuestInteractionAutomation.enabled, true)
+        PoliSavedVars.QuestInteractionAutomation.switches = PoliSavedVars.QuestInteractionAutomation.switches or {}
+        savedVars.QuestInteractionAutomation.switches = {}
+        savedVars.QuestInteractionAutomation.switches.Modifier = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.switches.Modifier) == "number", PoliSavedVars.QuestInteractionAutomation.switches.Modifier, 1)
 
         PoliSavedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
         savedVars.QuestRewardSelectionAutomation = {}
@@ -43,6 +46,7 @@ local function PoliQuest_OnAddonLoaded(addonName)
         savedVars.QuestRewardSelectionAutomation.switches = {}
         savedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold) == "string", PoliSavedVars.QuestRewardSelectionAutomation.switches.IlvlThreshold, "171")
         savedVars.QuestRewardSelectionAutomation.switches.SelectionLogic = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic) == "number" and pawnLoaded, PoliSavedVars.QuestRewardSelectionAutomation.switches.SelectionLogic, 1)
+        savedVars.QuestRewardSelectionAutomation.switches.Modifier = ternaryExpression(type(PoliSavedVars.QuestRewardSelectionAutomation.switches.Modifier) == "number", PoliSavedVars.QuestRewardSelectionAutomation.switches.Modifier, 1)
 
         PoliSavedVars.DialogInteractionAutomation = PoliSavedVars.DialogInteractionAutomation or {}
         savedVars.DialogInteractionAutomation = {}
@@ -190,7 +194,8 @@ local constantEventHandlers = {
         features.QuestSharingAutomation.eventHandlers.onChatMsgSystem
     },
     QUEST_DATA_LOAD_RESULT = {
-        features.QuestInteractionAutomation.eventHandlers.onQuestDataLoadResult
+        features.QuestInteractionAutomation.eventHandlers.onQuestDataLoadResult,
+        features.QuestRewardSelectionAutomation.eventHandlers.onQuestDataLoadResult
     }
 }
 

@@ -3,6 +3,8 @@ local _, addonTable = ...
 local slower, tinsert = string.lower, table.insert
 
 local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
+local questIDBlacklist = addonTable.data.questIDBlacklist
+local questNameBlacklist = addonTable.data.questNameBlacklist
 
 local feature = {}
 
@@ -17,6 +19,20 @@ end
 local function debugPrint(text)
     if DEBUG_QUEST_REWARD_SELECTION_HANDLER then
         print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+    end
+end
+
+local Modifier
+local function automationSuppressed()
+    if Modifier == "Alt" then
+        return IsAltKeyDown()
+    elseif Modifier == "Ctrl" then
+        return IsControlKeyDown()
+    elseif Modifier == "Shift" then
+        return IsShiftKeyDown()
+    else
+        debugPrint("Modifier switch not set.")
+        return false
     end
 end
 
@@ -501,21 +517,43 @@ feature.eventHandlers = {}
 
 function feature.eventHandlers.onQuestComplete()
     debugPrint("QuestRewardSelectionAutomation - Entering onQuestComplete")
-    debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
-    if QuestInfoTitleHeader then
-        debugPrint(QuestInfoTitleHeader:GetText())
-        if GetNumQuestChoices() > 1 then
-            local questRewardIndex = getQuestRewardChoice()
-            if questRewardIndex then
-                debugPrint("questRewardIndex: "..questRewardIndex)
-                GetQuestReward(questRewardIndex)
+    if not automationSuppressed() then
+        debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
+        if QuestInfoTitleHeader then
+            local title = QuestInfoTitleHeader:GetText()
+            if not questNameBlacklist[title] then
+                debugPrint("QuestInfoTitleHeader" .. title)
+                local numQuestChoices = GetNumQuestChoices()
+                debugPrint("numQuestChoices: " .. numQuestChoices)
+                if numQuestChoices > 1 then
+                    local questRewardIndex = getQuestRewardChoice()
+                    if questRewardIndex then
+                        debugPrint("questRewardIndex: "..questRewardIndex)
+                        GetQuestReward(questRewardIndex)
+                    end
+                end
+            else
+                print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
             end
         end
     end
     debugPrint("QuestRewardSelectionAutomation - Exiting onQuestComplete")
 end
 
+function feature.eventHandlers.onQuestDataLoadResult(questID, success)
+    if questIDBlacklist[questID] then
+        if success then
+            questNameBlacklist[C_QuestLog.GetTitleForQuestID(questID)] = true
+        else
+            print("|cFF5c8cc1PoliQuest[WARNING]:|r Quest name for quest ID " .. questID .. " failed to load. Quest Interaction Automation for this quest may not be prevented.")
+        end
+    end
+end
+
 local function initialize()
+    for questID in pairs(questIDBlacklist) do
+        C_QuestLog.RequestLoadQuestByID(questID)
+    end
 end
 
 local function terminate()
@@ -529,6 +567,8 @@ function feature.setSwitch(switchName, value)
         IlvlThreshold = tonumber(value)
     elseif switchName == "SelectionLogic" then
         SelectionLogic = value == 1 and "Simple Weights" or (value == 2 and "Pawn Weights" or (value == 3 and "Item Level" or (value == 4 and "Vendor Price" or nil)))
+    elseif switchName == "Modifier" then
+        Modifier = value == 1 and "Alt" or (value == 2 and "Ctrl" or (value == 3 and "Shift" or nil))
     end
 end
 addonTable.features = addonTable.features or {}
