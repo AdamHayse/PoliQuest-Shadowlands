@@ -38,6 +38,7 @@ local function PoliQuest_OnAddonLoaded(addonName)
         PoliSavedVars.QuestInteractionAutomation.switches = PoliSavedVars.QuestInteractionAutomation.switches or {}
         savedVars.QuestInteractionAutomation.switches = {}
         savedVars.QuestInteractionAutomation.switches.Modifier = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.switches.Modifier) == "number", PoliSavedVars.QuestInteractionAutomation.switches.Modifier, 1)
+        savedVars.QuestInteractionAutomation.switches.ExcludeTrivial = ternaryExpression(type(PoliSavedVars.QuestInteractionAutomation.switches.ExcludeTrivial) == "boolean", PoliSavedVars.QuestInteractionAutomation.switches.ExcludeTrivial, true)
 
         PoliSavedVars.QuestRewardSelectionAutomation = PoliSavedVars.QuestRewardSelectionAutomation or {}
         savedVars.QuestRewardSelectionAutomation = {}
@@ -192,10 +193,6 @@ local constantEventHandlers = {
     },
     CHAT_MSG_SYSTEM = {
         features.QuestSharingAutomation.eventHandlers.onChatMsgSystem
-    },
-    QUEST_DATA_LOAD_RESULT = {
-        features.QuestInteractionAutomation.eventHandlers.onQuestDataLoadResult,
-        features.QuestRewardSelectionAutomation.eventHandlers.onQuestDataLoadResult
     }
 }
 
@@ -304,8 +301,16 @@ end
 local function PoliQuest_OnEvent(self, event, ...)
     local eventHandlerSet = eventHandlers[event]
     for _, eventHandler in ipairs(eventHandlerSet) do
+        -- if event handler's feature is in debug, print "<FeatureName> - Entering handlerName"
         eventHandler(...)
     end
+--[[for featureName, handler in pairs(eventHandlerSet) do
+        local debug = addonTable.features[featureName].isDebug()
+        if debug then print() end
+        handler(...)
+        if debug then print() end
+    end
+]]
 end
 
 local function PoliQuest_OnUpdate()

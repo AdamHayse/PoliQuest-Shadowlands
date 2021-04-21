@@ -215,11 +215,14 @@ local function drawAutomationTab(container)
     QuestRewardSelectionAutomationCheckButton:SetUserData("children", { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown, RewardSelectionLogicModifierDropdown })
     container:AddChild(QuestRewardSelectionAutomationCheckButton)
 
+    local QuestInterationAutomationExcludeTrivialCheckBox = createSwitchCheckBox(container, "Exclude Low Level Quests", "QuestInteractionAutomation", "ExcludeTrivial")
+    container:AddChild(QuestInterationAutomationExcludeTrivialCheckBox)
+
     local QuestInterationAutomationModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestInteractionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
     container:AddChild(QuestInterationAutomationModifierDropdown)
 
     local QuestInteractionAutomationCheckButton = createFeatureCheckBox(container, "Quest Interaction Automation", "QuestInteractionAutomation")
-    QuestInteractionAutomationCheckButton:SetUserData("children", { QuestInterationAutomationModifierDropdown })
+    QuestInteractionAutomationCheckButton:SetUserData("children", { QuestInterationAutomationExcludeTrivialCheckBox, QuestInterationAutomationModifierDropdown })
     container:AddChild(QuestInteractionAutomationCheckButton)
 
     local DialogInteractionAutomationCheckButton = createFeatureCheckBox(container, "Dialog Interaction Automation", "DialogInteractionAutomation")

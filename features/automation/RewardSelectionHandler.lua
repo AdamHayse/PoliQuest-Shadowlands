@@ -4,7 +4,6 @@ local slower, tinsert = string.lower, table.insert
 
 local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
 local questIDBlacklist = addonTable.data.questIDBlacklist
-local questNameBlacklist = addonTable.data.questNameBlacklist
 
 local feature = {}
 
@@ -518,42 +517,30 @@ feature.eventHandlers = {}
 function feature.eventHandlers.onQuestComplete()
     debugPrint("QuestRewardSelectionAutomation - Entering onQuestComplete")
     if not automationSuppressed() then
-        debugPrint("QuestInfoTitleHeader shown: " .. tostring(not not QuestInfoTitleHeader))
-        if QuestInfoTitleHeader then
-            local title = QuestInfoTitleHeader:GetText()
-            if not questNameBlacklist[title] then
-                debugPrint("QuestInfoTitleHeader" .. title)
-                local numQuestChoices = GetNumQuestChoices()
-                debugPrint("numQuestChoices: " .. numQuestChoices)
-                if numQuestChoices > 1 then
-                    local questRewardIndex = getQuestRewardChoice()
-                    if questRewardIndex then
-                        debugPrint("questRewardIndex: "..questRewardIndex)
-                        GetQuestReward(questRewardIndex)
-                    end
+        local questID = GetQuestID()
+        local title = GetTitleText()
+        debugPrint("Quest ID: " .. questID)
+        debugPrint("Quest Name: " .. title)
+        if not questIDBlacklist[questID] then
+            local numQuestChoices = GetNumQuestChoices()
+            debugPrint("numQuestChoices: " .. numQuestChoices)
+            if numQuestChoices > 1 then
+                local questRewardIndex = getQuestRewardChoice()
+                if questRewardIndex then
+                    debugPrint("questRewardIndex: "..questRewardIndex)
+                    GetQuestReward(questRewardIndex)
                 end
-            else
-                print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
             end
+        else
+            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
+    else
+        debugPrint("Automation manually suppressed.")
     end
     debugPrint("QuestRewardSelectionAutomation - Exiting onQuestComplete")
 end
 
-function feature.eventHandlers.onQuestDataLoadResult(questID, success)
-    if questIDBlacklist[questID] then
-        if success then
-            questNameBlacklist[C_QuestLog.GetTitleForQuestID(questID)] = true
-        else
-            print("|cFF5c8cc1PoliQuest[WARNING]:|r Quest name for quest ID " .. questID .. " failed to load. Quest Interaction Automation for this quest may not be prevented.")
-        end
-    end
-end
-
 local function initialize()
-    for questID in pairs(questIDBlacklist) do
-        C_QuestLog.RequestLoadQuestByID(questID)
-    end
 end
 
 local function terminate()

@@ -38,8 +38,6 @@ addonTable.data.innWhitelist = {
     ["Host Ta'rela"] = true
 }
 
-addonTable.data.questNameBlacklist = {}
-
 addonTable.data.questIDBlacklist = {
     [62061] = true,  -- Prove Your Worth
     [62059] = true,  -- Prove Your Worth
