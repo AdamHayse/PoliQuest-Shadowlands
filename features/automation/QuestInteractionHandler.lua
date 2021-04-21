@@ -140,6 +140,9 @@ function feature.eventHandlers.onQuestDetail()
         local questID = GetQuestID()
         local title = GetTitleText()
         local isTrivial = C_QuestLog.IsQuestTrivial(questID)
+        debugPrint("Quest ID: " .. questID)
+        debugPrint("Quest Name: " .. title)
+        debugPrint("Low Level Quest: " .. tostring(isTrivial))
         if not questIDBlacklist[questID] then
             if not isTrivial or not ExcludeTrivial then
                 AcceptQuest()
