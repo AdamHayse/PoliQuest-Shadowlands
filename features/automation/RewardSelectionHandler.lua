@@ -1,7 +1,5 @@
 local _, addonTable = ...
 
-local slower, tinsert = string.lower, table.insert
-
 local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
 local questIDBlacklist = addonTable.data.questIDBlacklist
 
@@ -197,7 +195,7 @@ end
 local function collectQuestRewardInfo()
     local questRewardInfo = {}
     for i=1, GetNumQuestChoices() do
-        tinsert(questRewardInfo, {
+        table.insert(questRewardInfo, {
             index = i,
             itemLink = GetQuestItemLink("choice", i),
             equipSlotLocItemInfo = {}
@@ -267,7 +265,7 @@ local function missingItem(questRewardInfo)
                 return true
             else
 
-                tinsert(info.equipSlotLocItemInfo, {
+                table.insert(info.equipSlotLocItemInfo, {
                     itemLink = equipSlotItemLink
                 })
             end

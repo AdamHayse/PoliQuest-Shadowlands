@@ -1,7 +1,5 @@
 local _, addonTable = ...
 
-local GetInboxItem, GetInboxNumItems, TakeInboxItem = GetInboxItem, GetInboxNumItems, TakeInboxItem
-
 local feature = {}
 
 local DEBUG_MAILBOX_HANDLER

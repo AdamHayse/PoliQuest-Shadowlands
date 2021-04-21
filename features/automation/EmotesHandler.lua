@@ -1,7 +1,5 @@
 local _, addonTable = ...
 
-local UnitName, GetLogIndexForQuestID, DoEmote, pairs, smatch, print = UnitName, C_QuestLog.GetLogIndexForQuestID, DoEmote, pairs, string.match, print
-
 local feature = {}
 
 local DEBUG_EMOTES_HANDLER
@@ -55,7 +53,7 @@ feature.eventHandlers = {}
 local pendingEmote
 function feature.eventHandlers.onPlayerTargetChanged()
     local targetName = UnitName("target")
-    if targetName and targetWhitelist[targetName] and GetLogIndexForQuestID(targetWhitelist[targetName].questID) then
+    if targetName and targetWhitelist[targetName] and C_QuestLog.GetLogIndexForQuestID(targetWhitelist[targetName].questID) then
         DoEmote(targetWhitelist[targetName].emote)
     elseif pendingEmote and targetName == "Playful Trickster" then
         DoEmote(pendingEmote)
@@ -66,7 +64,7 @@ end
 function feature.eventHandlers.onChatMsgMonsterSay(chatMessage, name)
     if name == "Playful Trickster" then
         for k, v in pairs(messageWhitelist) do
-            if smatch(chatMessage, k) then
+            if string.match(chatMessage, k) then
                 if UnitName("target") ~= "Playful Trickster" then
                     print("|cFF5c8cc1PoliQuest:|r |cFFFF0000Make sure to target Playerful Trickster!|r")
                     pendingEmote = v
@@ -75,7 +73,7 @@ function feature.eventHandlers.onChatMsgMonsterSay(chatMessage, name)
                 DoEmote(v)
             end
         end
-        if pendingEmote and (smatch(chatMessage, "not right") or smatch(chatMessage, "Just disappointed") or smatch(chatMessage, "I told you the rules")) then
+        if pendingEmote and (string.match(chatMessage, "not right") or string.match(chatMessage, "Just disappointed") or string.match(chatMessage, "I told you the rules")) then
             pendingEmote = nil
         end
     end

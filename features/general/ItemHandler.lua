@@ -1,8 +1,6 @@
 local _, addonTable = ...
 
-local CreateFrame, UIParent, GameTooltip, GameTooltip_SetDefaultAnchor = CreateFrame, UIParent, GameTooltip, GameTooltip_SetDefaultAnchor
-local select, print, pairs, ipairs, tinsert = select, print, pairs, ipairs, table.insert
-local GetItemInfo, GetItemIcon, GetItemCooldown, GetItemCount, GetTime, InCombatLockdown = GetItemInfo, GetItemIcon, GetItemCooldown, GetItemCount, GetTime, InCombatLockdown
+local GetTime, InCombatLockdown = GetTime, InCombatLockdown
 
 local questItems = addonTable.data.questItems
 
@@ -261,7 +259,7 @@ local function updateCurrentItems()
     for itemID, recordedItemInfo in pairs(questItems) do
         local count = GetItemCount(itemID)
         if count > 0 then
-            tinsert(currentItems, itemID)
+            table.insert(currentItems, itemID)
             questItems[itemID].count = count
         else
             questItems[itemID].count = 0

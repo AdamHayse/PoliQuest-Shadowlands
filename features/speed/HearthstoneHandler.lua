@@ -1,8 +1,5 @@
 local _, addonTable = ...
 
-local UnitLevel, UnitName, GetOptions, GetNumOptions, SelectOption = UnitLevel, UnitName, C_GossipInfo.GetOptions, C_GossipInfo.GetNumOptions, C_GossipInfo.SelectOption
-local GossipFrameNpcNameText, StaticPopup1Button1 = GossipFrameNpcNameText, StaticPopup1Button1
-
 local innWhitelist = addonTable.data.innWhitelist
 
 local feature = {}
@@ -35,11 +32,11 @@ feature.eventHandlers = {}
 
 function feature.eventHandlers.onGossipShow()
     if innWhitelist[GossipFrameNpcNameText:GetText()] then
-        local gossipOptions = GetOptions()
-        local numOptions = GetNumOptions()
+        local gossipOptions = C_GossipInfo.GetOptions()
+        local numOptions = C_GossipInfo.GetNumOptions()
         for i=1, numOptions do
             if gossipOptions[i].type == "binder" then
-                SelectOption(i)
+                C_GossipInfo.SelectOption(i)
                 StaticPopup1Button1:Click("LeftButton")
             end
         end

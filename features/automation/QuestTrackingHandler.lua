@@ -1,7 +1,5 @@
 local _, addonTable = ...
 
-local AddQuestWatch = C_QuestLog.AddQuestWatch
-
 local feature = {}
 
 local DEBUG_QUEST_TRACKING_HANDLER
@@ -21,7 +19,7 @@ end
 feature.eventHandlers = {}
 
 function feature.eventHandlers.onQuestAccepted(questID)
-    AddQuestWatch(questID, 1)
+    C_QuestLog.AddQuestWatch(questID, 1)
 end
 
 local function initialize()

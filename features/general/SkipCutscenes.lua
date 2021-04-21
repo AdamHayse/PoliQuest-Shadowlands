@@ -1,7 +1,5 @@
 local _, addonTable = ...
 
-local CinematicFrame, CinematicFrame_CancelCinematic, GameMovieFinished, StopCinematic = CinematicFrame, CinematicFrame_CancelCinematic, GameMovieFinished, StopCinematic
-
 local feature = {}
 
 local DEBUG_SKIP_CUTSCENES

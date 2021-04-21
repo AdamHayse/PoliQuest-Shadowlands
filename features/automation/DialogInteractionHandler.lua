@@ -1,8 +1,5 @@
 local _, addonTable = ...
 
-local GetOptions, GetNumOptions, SelectOption, GetNumQuestLogEntries, GetInfo = C_GossipInfo.GetOptions, C_GossipInfo.GetNumOptions, C_GossipInfo.SelectOption, C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetInfo
-local ipairs, type = ipairs, type
-local GossipFrameNpcNameText, GossipFrame = GossipFrameNpcNameText, GossipFrame
 local dialogWhitelist = addonTable.data.dialogWhitelist
 
 local feature = {}
@@ -22,20 +19,20 @@ local function debugPrint(text)
 end
 
 local function searchDialogOptions(questDialog)
-    local gossipOptions = GetOptions()
-    local numOptions = GetNumOptions()
+    local gossipOptions = C_GossipInfo.GetOptions()
+    local numOptions = C_GossipInfo.GetNumOptions()
     for i=1, numOptions do
         local gossip = gossipOptions[i]
         local dialog = questDialog.dialog
         if type(dialog) == "string" then
             if questDialog.dialog == gossip.name then
-                SelectOption(i)
+                C_GossipInfo.SelectOption(i)
                 return true
             end
         else
             for _, v in ipairs(dialog) do
                 if v == gossip.name then
-                    SelectOption(i)
+                    C_GossipInfo.SelectOption(i)
                     return true
                 end
             end
@@ -44,10 +41,10 @@ local function searchDialogOptions(questDialog)
 end
 
 local function onGossipShow()
-    local numQuests = GetNumQuestLogEntries() or 0
+    local numQuests = C_QuestLog.GetNumQuestLogEntries() or 0
     debugPrint("numQuests: "..numQuests)
     for i=1, numQuests do
-        local questName = GetInfo(i).title
+        local questName = C_QuestLog.GetInfo(i).title
         local questDialog = dialogWhitelist[questName]
         if questDialog then
             debugPrint("Selecting quest dialog")
@@ -71,13 +68,17 @@ end
 feature.eventHandlers = {}
 
 function feature.eventHandlers.onGossipShow()
+    debugPrint("DialogInteractionAutomation - Entering onGossipShow")
     onGossipShow()
+    debugPrint("DialogInteractionAutomation - Exiting onGossipShow")
 end
 
 function feature.eventHandlers.onQuestAccepted(questID)
+    debugPrint("DialogInteractionAutomation - Entering onQuestAccepted")
     if GossipFrame:IsVisible() then
         onGossipShow()
     end
+    debugPrint("DialogInteractionAutomation - Exiting onQuestAccepted")
 end
 
 local function initialize()

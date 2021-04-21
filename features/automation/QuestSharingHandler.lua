@@ -1,9 +1,6 @@
 local _, addonTable = ...
 
-local IsInGroup, GetNumGroupMembers, IsPushableQuest, LE_PARTY_CATEGORY_HOME = IsInGroup, GetNumGroupMembers, C_QuestLog.IsPushableQuest, LE_PARTY_CATEGORY_HOME
-local GetInfo, GetLogIndexForQuestID, SetSelectedQuest, QuestLogPushQuest = C_QuestLog.GetInfo, C_QuestLog.GetLogIndexForQuestID, C_QuestLog.SetSelectedQuest, QuestLogPushQuest
-local GetZoneText, GetNumQuestLogEntries, IsInRaid, SendChatMessage = GetZoneText, C_QuestLog.GetNumQuestLogEntries, IsInRaid, SendChatMessage
-local tinsert, tremove, GetTime = table.insert, table.remove, GetTime
+local GetTime = GetTime
 
 local feature = {}
 
@@ -38,21 +35,21 @@ end
 local function fetchZoneDailies()
     local playerZone = GetZoneText()
     debugPrint("player zone: " .. (playerZone or "nil"))
-    local i, total = 1, GetNumQuestLogEntries()
+    local i, total = 1, C_QuestLog.GetNumQuestLogEntries()
     while i <= total do
-        local questLogInfo = GetInfo(i)
+        local questLogInfo = C_QuestLog.GetInfo(i)
         if questLogInfo.isHeader and questLogInfo.title == GetZoneText() then
             debugPrint("found quest header for current zone")
             i = i + 1
             local zoneDailies = {}
             while i <= total do
-                questLogInfo = GetInfo(i)
+                questLogInfo = C_QuestLog.GetInfo(i)
                 if questLogInfo.isHeader then
                     break
                 end
-                if questLogInfo.frequency == 1 and questLogInfo.level == 60 and IsPushableQuest(questLogInfo.questID) then
+                if questLogInfo.frequency == 1 and questLogInfo.level == 60 and C_QuestLog.IsPushableQuest(questLogInfo.questID) then
                     debugPrint("added quest to dailies list: " .. questLogInfo.title)
-                    tinsert(zoneDailies, questLogInfo.questID)
+                    table.insert(zoneDailies, questLogInfo.questID)
                 end
                 i = i + 1
             end
@@ -80,7 +77,7 @@ local function addZoneDailiesToQueue()
             end
             if not exists then
                 debugPrint("added quest to queue: " .. dailies[i])
-                tinsert(shareQueue, dailies[i])
+                table.insert(shareQueue, dailies[i])
                 debugPrint("queue size: " .. #shareQueue)
                 pendingShare = true
             end
@@ -105,12 +102,12 @@ feature.eventHandlers = {}
 
 function feature.eventHandlers.onQuestAccepted(questID)
     debugPrint("Accepted quest: "..questID)
-    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 and IsPushableQuest(questID) then
+    if IsInGroup(LE_PARTY_CATEGORY_HOME) and not IsInRaid(LE_PARTY_CATEGORY_HOME) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 and C_QuestLog.IsPushableQuest(questID) then
         debugPrint("in party and have party members and quest is pushable")
-        local questInfo = GetInfo(GetLogIndexForQuestID(questID))
+        local questInfo = C_QuestLog.GetInfo(C_QuestLog.GetLogIndexForQuestID(questID))
         debugPrint("quest frequency: "..questInfo.frequency .. " quest level: "..questInfo.level)
         if questInfo.frequency == 1 and questInfo.level == 60 then
-            tinsert(shareQueue, questID)
+            table.insert(shareQueue, questID)
             debugPrint("quest inserted into share queue. size: " .. #shareQueue)
             pendingShare = true
         end
@@ -162,9 +159,9 @@ end
 local function onUpdate()
     if pendingShare and not awaitingResponses then
         debugPrint("pushing quest: " .. shareQueue[1])
-        SetSelectedQuest(shareQueue[1])
+        C_QuestLog.SetSelectedQuest(shareQueue[1])
         QuestLogPushQuest()
-        tremove(shareQueue, 1)
+        table.remove(shareQueue, 1)
         debugPrint("quest removed from share queue. size: " .. #shareQueue)
         pendingShare = #shareQueue ~= 0
         if not pendingShare then

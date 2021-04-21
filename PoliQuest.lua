@@ -301,16 +301,8 @@ end
 local function PoliQuest_OnEvent(self, event, ...)
     local eventHandlerSet = eventHandlers[event]
     for _, eventHandler in ipairs(eventHandlerSet) do
-        -- if event handler's feature is in debug, print "<FeatureName> - Entering handlerName"
         eventHandler(...)
     end
---[[for featureName, handler in pairs(eventHandlerSet) do
-        local debug = addonTable.features[featureName].isDebug()
-        if debug then print() end
-        handler(...)
-        if debug then print() end
-    end
-]]
 end
 
 local function PoliQuest_OnUpdate()
