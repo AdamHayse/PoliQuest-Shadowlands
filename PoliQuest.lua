@@ -80,6 +80,14 @@ local function PoliQuest_OnAddonLoaded(addonName)
         PoliSavedVars.AutoTrackQuests = PoliSavedVars.AutoTrackQuests or {}
         savedVars.AutoTrackQuests = {}
         savedVars.AutoTrackQuests.enabled = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.enabled) == "boolean", PoliSavedVars.AutoTrackQuests.enabled, true)
+        PoliSavedVars.AutoTrackQuests.switches = PoliSavedVars.AutoTrackQuests.switches or {}
+        savedVars.AutoTrackQuests.switches = {}
+        savedVars.AutoTrackQuests.switches.TrackCampaign = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.switches.TrackCampaign) == "boolean", PoliSavedVars.AutoTrackQuests.switches.TrackCampaign, true)
+        savedVars.AutoTrackQuests.switches.TrackDaily = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.switches.TrackDaily) == "boolean", PoliSavedVars.AutoTrackQuests.switches.TrackDaily, true)
+        savedVars.AutoTrackQuests.switches.TrackWeekly = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.switches.TrackWeekly) == "boolean", PoliSavedVars.AutoTrackQuests.switches.TrackWeekly, true)
+        savedVars.AutoTrackQuests.switches.TrackLegendary = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.switches.TrackLegendary) == "boolean", PoliSavedVars.AutoTrackQuests.switches.TrackLegendary, true)
+        savedVars.AutoTrackQuests.switches.TrackLowLevel = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.switches.TrackLowLevel) == "boolean", PoliSavedVars.AutoTrackQuests.switches.TrackLowLevel, false)
+        savedVars.AutoTrackQuests.switches.TrackAllOthers = ternaryExpression(type(PoliSavedVars.AutoTrackQuests.switches.TrackAllOthers) == "boolean", PoliSavedVars.AutoTrackQuests.switches.TrackAllOthers, true)
         
         PoliSavedVars.QuestSharingAutomation = PoliSavedVars.QuestSharingAutomation or {}
         savedVars.QuestSharingAutomation = {}

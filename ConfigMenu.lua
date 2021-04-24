@@ -201,6 +201,16 @@ end
 local function drawAutomationTab(container)
     container:PauseLayout()
 
+    local QuestInterationAutomationExcludeTrivialCheckBox = createSwitchCheckBox(container, "Exclude Low Level Quests", "QuestInteractionAutomation", "ExcludeTrivial")
+    container:AddChild(QuestInterationAutomationExcludeTrivialCheckBox)
+
+    local QuestInterationAutomationModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestInteractionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
+    container:AddChild(QuestInterationAutomationModifierDropdown)
+
+    local QuestInteractionAutomationCheckButton = createFeatureCheckBox(container, "Quest Interaction Automation", "QuestInteractionAutomation")
+    QuestInteractionAutomationCheckButton:SetUserData("children", { QuestInterationAutomationExcludeTrivialCheckBox, QuestInterationAutomationModifierDropdown })
+    container:AddChild(QuestInteractionAutomationCheckButton)
+
     local IlvlThreshHoldEditBox = createSwitchEditBox(container, "Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", 150)
     container:AddChild(IlvlThreshHoldEditBox)
 
@@ -215,15 +225,28 @@ local function drawAutomationTab(container)
     QuestRewardSelectionAutomationCheckButton:SetUserData("children", { IlvlThreshHoldEditBox, RewardSelectionLogicDropdown, RewardSelectionLogicModifierDropdown })
     container:AddChild(QuestRewardSelectionAutomationCheckButton)
 
-    local QuestInterationAutomationExcludeTrivialCheckBox = createSwitchCheckBox(container, "Exclude Low Level Quests", "QuestInteractionAutomation", "ExcludeTrivial")
-    container:AddChild(QuestInterationAutomationExcludeTrivialCheckBox)
+    local AutoTrackQuestsCampaignCheckButton = createSwitchCheckBox(container, "Campaign", "AutoTrackQuests", "TrackCampaign")
+    container:AddChild(AutoTrackQuestsCampaignCheckButton)
+    
+    local AutoTrackQuestsDailyCheckButton = createSwitchCheckBox(container, "Daily", "AutoTrackQuests", "TrackDaily")
+    container:AddChild(AutoTrackQuestsDailyCheckButton)
+    
+    local AutoTrackQuestsWeeklyCheckButton = createSwitchCheckBox(container, "Weekly", "AutoTrackQuests", "TrackWeekly")
+    container:AddChild(AutoTrackQuestsWeeklyCheckButton)
+    
+    local AutoTrackQuestsLegendaryCheckButton = createSwitchCheckBox(container, "Legendary", "AutoTrackQuests", "TrackLegendary")
+    container:AddChild(AutoTrackQuestsLegendaryCheckButton)
 
-    local QuestInterationAutomationModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestInteractionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
-    container:AddChild(QuestInterationAutomationModifierDropdown)
+    local AutoTrackQuestsLowLevelCheckButton = createSwitchCheckBox(container, "Low Level", "AutoTrackQuests", "TrackLowLevel")
+    container:AddChild(AutoTrackQuestsLowLevelCheckButton)
 
-    local QuestInteractionAutomationCheckButton = createFeatureCheckBox(container, "Quest Interaction Automation", "QuestInteractionAutomation")
-    QuestInteractionAutomationCheckButton:SetUserData("children", { QuestInterationAutomationExcludeTrivialCheckBox, QuestInterationAutomationModifierDropdown })
-    container:AddChild(QuestInteractionAutomationCheckButton)
+    local AutoTrackQuestsAllOthersCheckButton = createSwitchCheckBox(container, "All Others", "AutoTrackQuests", "TrackAllOthers")
+    container:AddChild(AutoTrackQuestsAllOthersCheckButton)
+
+    local AutoTrackQuestsCheckButton = createFeatureCheckBox(container, "Quest Tracking Automation", "AutoTrackQuests")
+    AutoTrackQuestsCheckButton:SetUserData("children", { AutoTrackQuestsCampaignCheckButton, AutoTrackQuestsDailyCheckButton, AutoTrackQuestsWeeklyCheckButton,
+                                                        AutoTrackQuestsLegendaryCheckButton, AutoTrackQuestsLowLevelCheckButton, AutoTrackQuestsAllOthersCheckButton })
+    container:AddChild(AutoTrackQuestsCheckButton)
 
     local DialogInteractionAutomationCheckButton = createFeatureCheckBox(container, "Dialog Interaction Automation", "DialogInteractionAutomation")
     container:AddChild(DialogInteractionAutomationCheckButton)
@@ -233,9 +256,6 @@ local function drawAutomationTab(container)
 
     local QuestEmoteAutomationCheckButton = createFeatureCheckBox(container, "Quest Emote Automation", "QuestEmoteAutomation")
     container:AddChild(QuestEmoteAutomationCheckButton)
-
-    local AutoTrackQuestsCheckButton = createFeatureCheckBox(container, "Automatically Track Quests", "AutoTrackQuests")
-    container:AddChild(AutoTrackQuestsCheckButton)
 
     local QuestSharingAutomationCheckButton = createFeatureCheckBox(container, "Automatically Share Zone Dailies", "QuestSharingAutomation")
     container:AddChild(QuestSharingAutomationCheckButton)
