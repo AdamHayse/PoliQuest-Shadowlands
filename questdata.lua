@@ -47,14 +47,6 @@ addonTable.data.questIDBlacklist = {
     [62368] = true,  -- Rebuild Our Trust
     [62389] = true,  -- Rebuild Our Trust
     [62392] = true,  -- Rebuild Our Trust
-    [60250] = true,  -- A Valuable Find: Theater of Pain
-    [60251] = true,  -- A Valuable Find: Plaguefall
-    [60252] = true,  -- A Valuable Find: Spires of Ascension
-    [60253] = true,  -- A Valuable Find: Necrotic Wake
-    [60254] = true,  -- A Valuable Find: Tirna Scithe
-    [60255] = true,  -- A Valuable Find: De Other Side
-    [60256] = true,  -- A Valuable Find: Halls of Atonement
-    [60257] = true,  -- A Valuable Find: Sanguine Depths
 }
 
 addonTable.data.itemEquipLocToEquipSlot = {

@@ -207,7 +207,7 @@ end
 local function allQuestItemsAreEquippable(questRewardInfo)
     for _, info in ipairs(questRewardInfo) do
         local itemEquipLoc = select(9, GetItemInfo(info.itemLink))
-        if itemEquipLoc == "" then
+        if itemEquipLoc == "" or GetQuestItemInfoLootType("choice", info.index) == 1 then
             return false
         else
             info.itemEquipLoc = itemEquipLoc
