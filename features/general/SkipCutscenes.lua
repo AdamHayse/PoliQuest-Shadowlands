@@ -19,7 +19,11 @@ end
 local featureEnabled
 CinematicFrame:HookScript("OnShow", function()
     if featureEnabled then
-        CinematicFrame_CancelCinematic()
+        if CinematicFrame.isRealCinematic then
+            StopCinematic()
+        elseif CanCancelScene() then
+            CancelScene()
+        end
     end
 end)
 
@@ -35,7 +39,8 @@ end
 
 feature.eventHandlers = {}
 
-function feature.eventHandlers.onPlayMovie()
+function feature.eventHandlers.onPlayMovie(movieID)
+    debugPrint("Movie ID: " .. movieID)
     StopCinematic()
 end
 
