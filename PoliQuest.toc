@@ -9,5 +9,6 @@ embeds.xml
 ConfigMenu.lua
 
 questdata.lua
+util/QuestRewardUtil.lua
 features/features.xml
 PoliQuest.lua
