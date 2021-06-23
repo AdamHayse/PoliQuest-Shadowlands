@@ -60,6 +60,13 @@ local function PoliQuest_OnAddonLoaded(addonName)
         PoliSavedVars.QuestRewardEquipAutomation = PoliSavedVars.QuestRewardEquipAutomation or {}
         savedVars.QuestRewardEquipAutomation = {}
         savedVars.QuestRewardEquipAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.enabled) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.enabled, true)
+        PoliSavedVars.QuestRewardEquipAutomation.switches = PoliSavedVars.QuestRewardEquipAutomation.switches or {}
+        savedVars.QuestRewardEquipAutomation.switches = {}
+        
+        savedVars.QuestRewardEquipAutomation.switches.EquipLogic = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.EquipLogic) == "number" and pawnLoaded, PoliSavedVars.QuestRewardEquipAutomation.switches.EquipLogic, 1)
+        savedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverHeirlooms = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverHeirlooms) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverHeirlooms, true)
+        savedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverSpeedItems = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverSpeedItems) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverSpeedItems, false)
+        savedVars.QuestRewardEquipAutomation.switches.UseItemLevelLogicForTrinkets = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.UseItemLevelLogicForTrinkets) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.switches.UseItemLevelLogicForTrinkets, true)
 
         PoliSavedVars.QuestEmoteAutomation = PoliSavedVars.QuestEmoteAutomation or {}
         savedVars.QuestEmoteAutomation = {}

@@ -251,7 +251,21 @@ local function drawAutomationTab(container)
     local DialogInteractionAutomationCheckButton = createFeatureCheckBox(container, "Dialog Interaction Automation", "DialogInteractionAutomation")
     container:AddChild(DialogInteractionAutomationCheckButton)
 
+    local RewardEquipLogicDropdown = createSwitchDropdown(container, "Reward Equip Logic", "QuestRewardEquipAutomation", "EquipLogic", {"Simple Weights", "Pawn Weights", "Item Level"}, 150)
+    RewardEquipLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
+    container:AddChild(RewardEquipLogicDropdown)
+
+    local RewardEquipHeirloomCheckButton = createSwitchCheckBox(container, "Legendary", "QuestRewardEquipAutomation", "DoNotEquipOverHeirlooms")
+    container:AddChild(RewardEquipHeirloomCheckButton)
+
+    local RewardEquipSpeedCheckButton = createSwitchCheckBox(container, "Legendary", "QuestRewardEquipAutomation", "DoNotEquipOverSpeedItems")
+    container:AddChild(RewardEquipSpeedCheckButton)
+
+    local RewardEquipTrinketsCheckButton = createSwitchCheckBox(container, "Legendary", "QuestRewardEquipAutomation", "UseItemLevelLogicForTrinkets")
+    container:AddChild(RewardEquipTrinketsCheckButton)
+
     local QuestRewardEquipAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Equip Automation", "QuestRewardEquipAutomation")
+    QuestRewardEquipAutomationCheckButton:SetUserData("children", { RewardEquipLogicDropdown, RewardEquipHeirloomCheckButton, RewardEquipSpeedCheckButton, RewardEquipTrinketsCheckButton })
     container:AddChild(QuestRewardEquipAutomationCheckButton)
 
     local QuestEmoteAutomationCheckButton = createFeatureCheckBox(container, "Quest Emote Automation", "QuestEmoteAutomation")

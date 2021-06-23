@@ -3,6 +3,7 @@ local _, addonTable = ...
 addonTable.util = addonTable.util or {}
 
 local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
+local speedItems = addonTable.data.speedItems
 
 local util = addonTable.util
 
@@ -71,21 +72,20 @@ function util.getItemInfo(itemLink, specInfo, index)
     }
 end
 
+-- returns hashmap of equipslots and corresponding itemLinks (nil for ones that don't exist)
 function util.getEquipSlotItemLinks(itemEquipLoc)
     local equipSlotIDs = itemEquipLocToEquipSlot[itemEquipLoc]
     local itemLinks = {}
     for _, slotID in ipairs(equipSlotIDs) do
-        local itemLink = GetInventoryItemLink("player", slotID)
-        if itemLink then
-            table.insert(itemLinks, itemLink)
-        end
+        itemLinks[slotID] = GetInventoryItemLink("player", slotID)
     end
     return itemLinks
 end
 
+-- The second part of the conditional in this function accounts for currency rewards that the game says are equippable even though they aren't
 function util.allItemsAreEquippable(itemInfoList)
     for _, itemInfo in ipairs(itemInfoList) do
-        if itemInfo.itemEquipLoc == ""or itemInfo.index and GetQuestItemInfoLootType("choice", itemInfo.index) == 1 then
+        if itemInfo.itemEquipLoc == "" or itemInfo.index and GetQuestItemInfoLootType("choice", itemInfo.index) == 1 then
             return false
         end
     end
@@ -102,6 +102,7 @@ function util.getHighestItemLevel(itemInfoList)
     return highestItemLevel
 end
 
+-- No side effects on itemInfoList
 function util.filterSpecItems(itemInfoList, specInfo)
     local specItemInfoList = {}
     local specID = specInfo.specID
@@ -125,8 +126,10 @@ function util.missingItem(itemInfoList)
     for _, itemInfo in ipairs(itemInfoList) do
         local equipSlotIDs = itemEquipLocToEquipSlot[itemInfo.itemEquipLoc]
         local equipSlotItemLinks = util.getEquipSlotItemLinks(itemInfo.itemEquipLoc)
-        if #equipSlotItemLinks < #equipSlotIDs then
-            return true
+        for _, equipSlotID in ipairs(equipSlotIDs) do
+            if not equipSlotItemLinks[equipSlotID] then
+                return true
+            end
         end
     end
     return false
@@ -159,8 +162,7 @@ function util.weaponExists(itemInfoList)
         if itemEquipLoc == "INVTYPE_WEAPON" or itemEquipLoc == "INVTYPE_SHIELD"
         or itemEquipLoc == "INVTYPE_RANGED" or itemEquipLoc == "INVTYPE_2HWEAPON"
         or itemEquipLoc == "INVTYPE_WEAPONMAINHAND" or itemEquipLoc == "INVTYPE_WEAPONOFFHAND"
-        or itemEquipLoc == "INVTYPE_HOLDABLE" or itemEquipLoc == "INVTYPE_THROWN"
-        or itemEquipLoc == "INVTYPE_RANGEDRIGHT" then
+        or itemEquipLoc == "INVTYPE_HOLDABLE" or itemEquipLoc == "INVTYPE_THROWN" then
             return true
         end
     end
@@ -185,10 +187,90 @@ function util.tabardExists(itemInfoList)
     return false
 end
 
+function util.boeExists(itemInfoList)
+    local boeText = _G["ITEM_BIND_ON_EQUIP"]
+    local scanningTooltip = addonTable.util.tooltip
+    for _, itemInfo in ipairs(itemInfoList) do
+        scanningTooltip:ClearLines()
+        scanningTooltip:SetHyperlink(itemInfo.itemLink)
+        for i=1, scanningTooltip:NumLines() do
+            if _G["PoliScanningTooltipTextLeft" .. i]:GetText() == boeText then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function util.getNumHeirlooms(itemEquipLoc)
+    local count = 0
+    for _, equipSlotID in ipairs(itemEquipLocToEquipSlot[itemEquipLoc]) do
+        local itemLink = GetInventoryItemLink("player", equipSlotID)
+        if select(3, GetItemInfo(itemLink)) == 7 then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+function util.getNumSpeedItems(itemEquipLoc)
+    local count = 0
+    for _, equipSlotID in ipairs(itemEquipLocToEquipSlot[itemEquipLoc]) do
+        local itemLink = GetInventoryItemLink("player", equipSlotID)
+        if itemLink then
+            local itemID = tonumber(itemLink:match("item:(%d+)"))
+            if speedItems[itemID] then
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
+
+function util.missingWeapon(itemEquipLoc)
+    if itemEquipLoc == "INVTYPE_WEAPON" then
+        return GetInventoryItemLink("player", 16) == nil or GetInventoryItemLink("player", 17) == nil and CanDualWield()
+    elseif itemEquipLoc == "INVTYPE_SHIELD" then
+        return GetInventoryItemLink("player", 17) == nil
+    elseif itemEquipLoc == "INVTYPE_2HWEAPON" then
+        return GetInventoryItemLink("player", 16) == nil or GetInventoryItemLink("player", 17) == nil and IsSpellKnown(46917)
+    elseif itemEquipLoc == "INVTYPE_WEAPONMAINHAND" then
+        return GetInventoryItemLink("player", 16) == nil
+    elseif itemEquipLoc == "INVTYPE_WEAPONOFFHAND" then
+        return GetInventoryItemLink("player", 17) == nil
+    elseif itemEquipLoc == "INVTYPE_HOLDABLE" then
+        return GetInventoryItemLink("player", 17) == nil
+    elseif itemEquipLoc == "INVTYPE_RANGED" then
+        return GetInventoryItemLink("player", 16) == nil
+    end
+end
+
+function util.weaponDiscrepancy(itemEquipLoc)
+    local slot16Link, slot17Link = GetInventoryItemLink("player", 16), GetInventoryItemLink("player", 17)
+    local itemEquipLoc16 = slot16Link and select(9, GetItemInfo(slot16Link))
+    local itemEquipLoc17 = slot17Link and select(9, GetItemInfo(slot17Link))
+    if itemEquipLoc == "INVTYPE_WEAPON" then
+        return itemEquipLoc16 ~= "INVTYPE_WEAPON" and itemEquipLoc16 ~= "INVTYPE_WEAPONMAINHAND"
+        or CanDualWield() and itemEquipLoc17 ~= "INVTYPE_WEAPON" and itemEquipLoc17 ~= "INVTYPE_WEAPONOFFHAND"
+    elseif itemEquipLoc == "INVTYPE_SHIELD" then
+        return itemEquipLoc17 ~= "INVTYPE_SHIELD"
+    elseif itemEquipLoc == "INVTYPE_2HWEAPON" then
+        return itemEquipLoc16 ~= "INVTYPE_2HWEAPON" or IsSpellKnown(46917) and itemEquipLoc17 ~= "INVTYPE_2HWEAPON"
+    elseif itemEquipLoc == "INVTYPE_WEAPONMAINHAND" then
+        return itemEquipLoc16 ~= "INVTYPE_WEAPONMAINHAND" and itemEquipLoc16 ~= "INVTYPE_WEAPON"
+    elseif itemEquipLoc == "INVTYPE_WEAPONOFFHAND" then
+        return itemEquipLoc17 ~= "INVTYPE_WEAPONOFFHAND" and itemEquipLoc17 ~= "INVTYPE_WEAPON"
+    elseif itemEquipLoc == "INVTYPE_HOLDABLE" then
+        return itemEquipLoc17 ~= "INVTYPE_HOLDABLE"
+    elseif itemEquipLoc == "INVTYPE_RANGED" then
+        return itemEquipLoc17 ~= "INVTYPE_RANGED"
+    end
+end
+
 function util.addItemsToCompare(itemInfo, itemLinks, specInfo)
     local itemsToCompare = {}
-    for _, itemLink in ipairs(itemLinks) do
-        table.insert(itemsToCompare, util.getItemInfo(itemLink, specInfo))
+    for equipSlotID, itemLink in pairs(itemLinks) do
+        itemsToCompare[equipSlotID] = util.getItemInfo(itemLink, specInfo)
     end
     itemInfo.itemsToCompare = itemsToCompare
 end
@@ -299,6 +381,48 @@ function util.compareItemsSimple(itemInfo1, itemInfo2, specInfo)
             return 2, score1
         else
             return 1, score1
+        end
+    end
+end
+
+-- Returns the first equipSlotID for itemEquipLoc where no item is equipped
+function util.missingItemSlotID(itemEquipLoc)
+    local equipSlotIDs = itemEquipLocToEquipSlot[itemEquipLoc]
+    for _, equipSlotID in ipairs(equipSlotIDs) do
+        if GetInventoryItemLink("player", equipSlotID) == nil then
+            return equipSlotID
+        end
+    end
+end
+
+function util.getValidEquipSlotItemLinks(itemEquipLoc)
+    local equipSlotIDs = itemEquipLocToEquipSlot[itemEquipLoc]
+    if itemEquipLoc == "INVTYPE_2HWEAPON" and IsSpellKnown(46917) then
+        table.insert(equipSlotIDs, 17)
+    end
+    if itemEquipLoc == "INVTYPE_WEAPON" and not CanDualWield() then
+        table.remove(equipSlotIDs)
+    end
+    local itemLinks = {}
+    for _, equipSlotID in ipairs(equipSlotIDs) do
+        itemLinks[equipSlotID] = GetInventoryItemLink("player", equipSlotID)
+    end
+    return itemLinks
+end
+
+function util.filterHeirloomItems(itemsToCompare)
+    for equipSlotID, itemInfo in pairs(itemsToCompare) do
+        if select(3, GetItemInfo(itemInfo.itemLink)) == 7 then
+            itemsToCompare[equipSlotID] = nil
+        end
+    end
+end
+
+function util.filterSpeedItems(itemsToCompare)
+    for equipSlotID, itemInfo in pairs(itemsToCompare) do
+        local itemID = tonumber(itemLink:match("item:(%d+)"))
+        if speedItems[itemID] then
+            itemsToCompare[equipSlotID] = nil
         end
     end
 end

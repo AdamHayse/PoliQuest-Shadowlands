@@ -1,6 +1,5 @@
 local _, addonTable = ...
 
-local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
 local questIDBlacklist = addonTable.data.questIDBlacklist
 
 local util = addonTable.util
@@ -40,7 +39,7 @@ local function calculatePotentialUpgradesSimple(questItemInfoList, lootSpecInfo)
     local results = {}
     for _, itemInfo in ipairs(questItemInfoList) do
         local maxClass, maxScore
-        if #itemInfo.itemsToCompare ~= #itemEquipLocToEquipSlot[itemInfo.itemEquipLoc] then
+        if util.missingItem({itemInfo}) then
             maxClass, maxScore = util.getSimpleScore(itemInfo, lootSpecInfo)
             table.insert(results, {
                 itemInfo = itemInfo,
@@ -48,7 +47,7 @@ local function calculatePotentialUpgradesSimple(questItemInfoList, lootSpecInfo)
                 score = maxScore
             })
         else
-            for _, equippedItemInfo in ipairs(itemInfo.itemsToCompare) do
+            for _, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
                 local class, score = util.compareItemsSimple(itemInfo, equippedItemInfo, lootSpecInfo)
                 if not maxClass or class > maxClass or class == maxClass and score > maxScore then
                     maxClass = class
@@ -78,10 +77,10 @@ local function calculatePotentialUpgradesPawn(questItemInfoList, lootSpecInfo)
     local scaleName = util.fetchScaleName(lootSpecInfo)
     for _, itemInfo in ipairs(questItemInfoList) do
         local maxPawnScore
-        if #itemInfo.itemsToCompare ~= #itemEquipLocToEquipSlot[itemInfo.itemEquipLoc] then
+        if util.missingItem({itemInfo}) then
             maxPawnScore = util.getPawnScore(itemInfo, scaleName)
         else
-            for _, equippedItemInfo in ipairs(itemInfo.itemsToCompare) do
+            for _, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
                 local pawnScore = util.compareItemsPawn(itemInfo, equippedItemInfo, scaleName)
                 if pawnScore == nil then
                     maxPawnScore = nil
@@ -106,10 +105,10 @@ local function calculatePotentialUpgradesItemLevel(questItemInfoList)
     debugPrint("Item Level score for quest rewards: " .. questItemInfoList[1].itemLevel)
     for _, itemInfo in ipairs(questItemInfoList) do
         local maxItemLevelScore
-        if #itemInfo.itemsToCompare ~= #itemEquipLocToEquipSlot[itemInfo.itemEquipLoc] then
+        if util.missingItem({itemInfo}) then
             maxItemLevelScore = itemInfo.itemLevel
         else
-            for _, equippedItemInfo in ipairs(itemInfo.itemsToCompare) do
+            for _, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
                 local itemLevelScore = util.compareItemsItemLevel(itemInfo, equippedItemInfo)
                 if not maxItemLevelScore or itemLevelScore > maxItemLevelScore then
                     maxItemLevelScore = itemLevelScore
@@ -162,8 +161,11 @@ local function shouldAbortRewardAutomation(questItemInfoList, lootSpecInfo)
         local specQuestItemInfoList = util.filterSpecItems(questItemInfoList, lootSpecInfo)
 
         if #specQuestItemInfoList == 0 then
-            if GetSpecialization() == 5 then
-                print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no class specialization. Set loot specialization to remove this check while lower than level 10.")
+            if lootSpecInfo.specIndex == 5 then
+                print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no class specialization.")
+                if UnitLevel("player") < 10 then
+                    print("|cFF5c8cc1PoliQuest:|r Set loot specialization to remove this check while lower than level 10.")
+                end
             else
                 print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no items for your current loot specialization.")
             end
@@ -287,7 +289,7 @@ end
 feature.initialize = initialize
 feature.terminate = terminate
 function feature.setSwitch(switchName, value)
-    debugPrint(switchName .. " set to " .. value)
+    debugPrint(switchName .. " set to " .. tostring(value))
     if switchName == "IlvlThreshold" then
         IlvlThreshold = tonumber(value)
     elseif switchName == "SelectionLogic" then
