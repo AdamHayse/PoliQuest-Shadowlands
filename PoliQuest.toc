@@ -1,7 +1,7 @@
-## Interface: 90005
+## Interface: 90100
 ## Author: Polihayse
 ## Title: PoliQuest
-## Notes: Quest automation addon for Shadowlands
+## Notes: Quest automation addon
 ## SavedVariables: PoliSavedVars
 ## OptionalDeps: Pawn
 
