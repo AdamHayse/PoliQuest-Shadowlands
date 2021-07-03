@@ -147,17 +147,16 @@ end
 local IlvlThreshold
 local function shouldAbortRewardAutomation(questItemInfoList, lootSpecInfo)
     debugPrint("SelectionLogic = " .. (SelectionLogic or "nil"))
+    if not util.allItemsAreEquippable(questItemInfoList) then
+        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items that are not equippable.")
+        return true
+    end
+    local questItemIlvl = util.getHighestItemLevel(questItemInfoList)
+    if questItemIlvl > IlvlThreshold then
+        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items above ilvl threshold.")
+        return true
+    end
     if SelectionLogic ~= "Vendor Price" then
-        if not util.allItemsAreEquippable(questItemInfoList) then
-            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items that are not equippable.")
-            return true
-        end
-        local questItemIlvl = util.getHighestItemLevel(questItemInfoList)
-        if questItemIlvl > IlvlThreshold then
-            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items above ilvl threshold.")
-            return true
-        end
-
         local specQuestItemInfoList = util.filterSpecItems(questItemInfoList, lootSpecInfo)
 
         if #specQuestItemInfoList == 0 then

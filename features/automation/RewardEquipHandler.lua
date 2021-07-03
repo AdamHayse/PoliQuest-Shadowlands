@@ -1,7 +1,7 @@
 local _, addonTable = ...
 
 local GetTime, InCombatLockdown = GetTime, InCombatLockdown
-
+local util = addonTable.util
 local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
 local levelingItems = addonTable.data.levelingItems
 local bonusToIlvl = addonTable.data.bonusToIlvl
@@ -16,10 +16,16 @@ function feature.isDebug()
     return DEBUG_REWARDS_HANDLER
 end
 
+local globalPrint = print
+
 local function debugPrint(text)
     if DEBUG_REWARDS_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
+        globalPrint("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
     end
+end
+
+local function print(text)
+    globalPrint("|cFF5c8cc1PoliQuest:|r " .. text)
 end
 
 local function getBagAndSlot(itemName)
@@ -91,15 +97,12 @@ end
 
 local function getUpgradeEquipSlotIDItemLevel(itemInfo)
     local maxItemLevelScore, maxItemLevelScoreEquipSlotID
-    if util.missingItem({itemInfo}) then
-        return true, util.missingItemSlotID(itemInfo.itemEquipLoc)
-    else
-        for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
-            local itemLevelScore = util.compareItemsItemLevel(itemInfo, equippedItemInfo)
-            if not maxItemLevelScore or itemLevelScore > maxItemLevelScore then
-                maxItemLevelScore = itemLevelScore
-                maxItemLevelScoreEquipSlotID = equipSlotID
-            end
+    for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
+        local itemLevelScore = util.compareItemsItemLevel(itemInfo, equippedItemInfo)
+        debugPrint("Item Level score for item in equip slot " .. equipSlotID .. ": " .. (itemLevelScore or "nil"))
+        if not maxItemLevelScore or itemLevelScore > maxItemLevelScore then
+            maxItemLevelScore = itemLevelScore
+            maxItemLevelScoreEquipSlotID = equipSlotID
         end
     end
     if maxItemLevelScore > 0 then
@@ -111,17 +114,13 @@ end
 
 local function getUpgradeEquipSlotIDSimple(itemInfo, specInfo)
     local maxClass, maxScore, maxSimpleScoreEquipSlotID
-    if util.missingItem({itemInfo}) then
-        return true, util.missingItemSlotID(itemInfo.itemEquipLoc)
-    else
-        util.addItemsToCompare(itemInfo, util.getEquipSlotItemLinks(itemInfo.itemEquipLoc), specInfo)
-        for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
-            local class, score = util.compareItemsSimple(itemInfo, equippedItemInfo, specInfo)
-            if score > 0 and (not maxClass or class > maxClass or class == maxClass and score > maxScore) then
-                maxClass = class
-                maxScore = score
-                maxSimpleScoreEquipSlotID = equipSlotID
-            end
+    for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
+        local class, score = util.compareItemsSimple(itemInfo, equippedItemInfo, specInfo)
+        debugPrint("Simple Weights class and score for item in equip slot " .. equipSlotID .. ": Class: " .. (class or "nil") .. " Score: " .. (score or "nil"))
+        if score > 0 and (not maxClass or class > maxClass or class == maxClass and score > maxScore) then
+            maxClass = class
+            maxScore = score
+            maxSimpleScoreEquipSlotID = equipSlotID
         end
     end
     if maxSimpleScoreEquipSlotID then
@@ -131,102 +130,94 @@ local function getUpgradeEquipSlotIDSimple(itemInfo, specInfo)
     end
 end
 
-local function getUpgradeEquipSlotIDPawnWeapon(itemInfo, scaleName)
-    local equipSlotItemLinks = util.getValidEquipSlotItemLinks(itemInfo.itemEquipLoc)
-    util.addItemsToCompare(itemInfo, equipSlotItemLinks, specInfo)
+local function getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
+    local scaleName = util.fetchScaleName(specInfo)
+    local maxPawnScore, maxPawnScoreEquipSlotID
+    for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
+        local pawnScore = util.compareItemsPawn(itemInfo, equippedItemInfo, scaleName)
+        debugPrint("Pawn Weights score for item in equip slot " .. equipSlotID .. ": " .. (pawnScore or "nil"))
+        if pawnScore == nil then
+            debugPrint("Failed to calculate Pawn Weights score for quest reward")
+            return nil
+        elseif not maxPawnScore or pawnScore > maxPawnScore then
+            maxPawnScore = pawnScore
+            maxPawnScoreEquipSlotID = equipSlotID
+        end
+    end
+    if maxPawnScore > 0 then
+        return true, maxPawnScoreEquipSlotID
+    else
+        return false
+    end
+end
+
+local EquipLogic
+local function executeEquipLogic(itemInfo, specInfo)
+    local pawnSuccess
+    if EquipLogic == "Pawn Weights" and specInfo.specIndex ~= 5 then
+        local isUpgrade, slotID = getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
+        if isUpgrade ~= nil then
+            return isUpgrade, slotID
+        end
+    end
+    local itemIsTrinket = util.trinketExists({itemInfo})
+    local itemIsWeapon = util.weaponExists({itemInfo})
+    if not itemIsTrinket and not itemIsWeapon and (EquipLogic == "Simple Weights" or EquipLogic == "Pawn Weights") then
+        return getUpgradeEquipSlotIDSimple(itemInfo, specInfo)
+    end
+    if EquipLogic == "Item Level" or itemIsTrinket or itemIsWeapon then
+        return getUpgradeEquipSlotIDItemLevel(itemInfo)
+    end
+end
+
+local DoNotEquipOverHeirlooms, DoNotEquipOverSpeedItems, UseItemLevelLogicForTrinkets
+
+local function filterItemsToCompare(itemInfo)
     if DoNotEquipOverHeirlooms then
         util.filterHeirloomItems(itemInfo.itemsToCompare)
     end
     if DoNotEquipOverSpeedItems then
         util.filterSpeedItemItemLinks(itemInfo.itemsToCompare)
     end
-    if #itemInfo.itemsToCompare == 0 then
-        return false
-    else
-        local maxPawnScore, maxPawnScoreEquipSlotID
-        for equipSlotID, equippedItemInfo in ipairs(itemInfo.itemsToCompare) do
-            local pawnScore = util.compareItemsPawn(itemInfo, equippedItemInfo, scaleName)
-            if pawnScore == nil then
-                return nil
-            elseif not maxPawnScore or pawnScore > maxPawnScore then
-                maxPawnScore = pawnScore
-                maxPawnScoreEquipSlotID = equipSlotID
-            end
-        end
-        if maxPawnScore > 0 then
-            return true, maxPawnScoreEquipSlotID
-        else
-            return false
-        end
-    end
 end
-
-local function getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
-    local scaleName = util.fetchScaleName(specInfo)
-    -- if item is a weapon, return special weapon function
-    if util.weaponExists({itemInfo}) then
-        return getUpgradeEquipSlotIDPawnWeapon(itemInfo, scaleName)
-    else
-        local maxPawnScore, maxPawnScoreEquipSlotID
-        if util.missingItem({itemInfo}) then
-            return true, util.missingItemSlotID(itemInfo.itemEquipLoc)
-        else
-            util.addItemsToCompare(itemInfo, util.getEquipSlotItemLinks(itemInfo.itemEquipLoc), specInfo)
-            for equipSlotID, equippedItemInfo in ipairs(itemInfo.itemsToCompare) do
-                local pawnScore = util.compareItemsPawn(itemInfo, equippedItemInfo, scaleName)
-                if pawnScore == nil then
-                    return nil
-                elseif not maxPawnScore or pawnScore > maxPawnScore then
-                    maxPawnScore = pawnScore
-                    maxPawnScoreEquipSlotID = equipSlotID
-                end
-            end
-        end
-        if maxPawnScore > 0 then
-            return true, maxPawnScoreEquipSlotID
-        else
-            return false
-        end
-    end
-end
-
-local DoNotEquipOverHeirlooms, DoNotEquipOverSpeedItems, UseItemLevelLogicForTrinkets
 
 local function shouldAbortEquipAutomation(itemInfo, specInfo)
     local itemInfoContainer = { itemInfo }
     local itemEquipLoc = itemInfo.itemEquipLoc
 
     if not util.allItemsAreEquippable(itemInfoContainer) then
+        debugPrint("Quest reward equip automation aborted due to unequippable quest reward.")
         return true
     end
 
     if util.boeExists(itemInfoContainer) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward equip automation aborted due to BOE reward.")
+        print("Quest reward equip automation aborted due to BOE reward.")
         return true
     end
     
     if #util.filterSpecItems(itemInfoContainer, specInfo) == 0 and specInfo.specIndex ~= 5 then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward equip automation aborted due to reward item not suitable for current specialization.")
+        print("Quest reward equip automation aborted due to reward item not suitable for current specialization.")
         return true
     end
 
-    if #itemEquipLocToEquipSlot[itemEquipLoc] == util.getNumHeirlooms(itemEquipLoc) and DoNotEquipOverHeirlooms then
+    local numEquipSlots = #itemEquipLocToEquipSlot[itemEquipLoc]
+    if DoNotEquipOverHeirlooms and numEquipSlots == util.getNumHeirlooms(itemEquipLoc) then
         debugPrint("Quest reward equip automation aborted due to heirloom item in equip slot.")
         return true
     end
 
-    if #itemEquipLocToEquipSlot[itemEquipLoc] == util.getNumSpeedItems(itemEquipLoc) and DoNotEquipOverSpeedItems then
+    if DoNotEquipOverSpeedItems and numEquipSlots == util.getNumSpeedItems(itemEquipLoc) then
         debugPrint("Quest reward equip automation aborted due to speed leveling item in equip slot.")
         return true
     end
 
-    if util.trinketExists(itemInfoContainer) and not UseItemLevelLogicForTrinkets then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward equip automation aborted due to trinket reward. Enable \"Use Item Level Logic for Trinkets\" to automate trinkets in the future.")
+    if not UseItemLevelLogicForTrinkets and util.trinketExists(itemInfoContainer) then
+        print("Quest reward equip automation aborted due to trinket reward. Enable \"Use Item Level Logic for Trinkets\" to automate trinkets in the future.")
         return true
     end
 
     if util.weaponExists(itemInfoContainer) then
-        if util.missingWeapon(itemEquipLoc) then
+        if util.missingItem(itemInfoContainer) then
             print("Quest reward equip automation aborted due to item missing from equip slot.")
             return true
         end
@@ -239,26 +230,25 @@ local function shouldAbortEquipAutomation(itemInfo, specInfo)
     return false
 end
 
-local EquipLogic
 local function isUpgrade(itemLink)
     local specInfo = util.getCurrentSpecInfo()
     local itemInfo = util.getItemInfo(itemLink, specInfo)
     if shouldAbortEquipAutomation(itemInfo, specInfo) then
         return false
     else
-        local pawnSuccess
-        if EquipLogic == "Pawn" then
-            local isUpgrade, slotID = getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
-            if isUpgrade ~= nil then
-                return isUpgrade, slotID
-            end
+        if util.missingItem({itemInfo}) then
+            debugPrint("Item missing from item equip location " .. itemInfo.itemEquipLoc)
+            return true, util.missingItemSlotID(itemInfo.itemEquipLoc)
         end
-        local itemIsTrinket, itemIsWeapon = util.trinketExists({itemInfo}), util.weaponExists({itemInfo})
-        if not itemIsTrinket and not itemIsWeapon and (EquipLogic == "Simple" or EquipLogic == "Pawn") then
-            return getUpgradeEquipSlotIDSimple(itemInfo, specInfo)
-        end
-        if EquipLogic == "ItemLevel" or itemIsTrinket or itemIsWeapon then
-            return getUpgradeEquipSlotIDItemLevel(itemInfo)
+        local equipSlotItemLinks = util.getEquipSlotItemLinks(itemInfo.itemEquipLoc)
+        util.addItemsToCompare(itemInfo, util.getEquipSlotItemLinks(itemInfo.itemEquipLoc), specInfo)
+        filterItemsToCompare(itemInfo)
+        if next(itemInfo.itemsToCompare) == nil then
+            debugPrint("No items to compare against due to Quest Reward Equip Automation feature settings.")
+            return false
+        else
+            debugPrint("Equip Logic: " .. (EquipLogic or "nil"))
+            return executeEquipLogic(itemInfo, specInfo)
         end
     end
 end
@@ -292,16 +282,19 @@ end
 local function onUpdate()
     if #questLootItemLinks > 0 and GetTime() - questLootReceivedTime > 1 and not InCombatLockdown() then
         questLootReceivedTime = GetTime()
+        debugPrint("Searching for quest reward...")
         local bagID, slotIndex = getBagAndSlot(GetItemInfo(questLootItemLinks[#questLootItemLinks]))
         -- Can only identify if it is an upgrade if it is found in bag
-        debugPrint("looking for item")
         if bagID and slotIndex then
-            local upgrade, slotID = isUpgrade(bagID, slotIndex)
+            debugPrint("Quest reward found. Bag ID: " .. bagID .. "  Slot Index: " .. slotIndex)
+            local mixin = ItemLocation:CreateFromBagAndSlot(bagID, slotIndex)
+            local itemItemLink = C_Item.GetItemLink(mixin)
+            local upgrade, slotID = isUpgrade(itemItemLink)
             if upgrade then
-                debugPrint("is upgrade. attempting to equip.")
+                debugPrint("Equipping over equip slot " .. slotID)
                 EquipItemByName(questLootItemLinks[#questLootItemLinks], slotID)
             else
-                debugPrint("not an upgrade.")
+                debugPrint("Quest reward is not an upgrade")
                 table.remove(questLootItemLinks)
                 if #questLootItemLinks == 0 then
                     questLootReceivedTime = nil

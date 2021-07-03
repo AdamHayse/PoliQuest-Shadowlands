@@ -108,14 +108,14 @@ function util.filterSpecItems(itemInfoList, specInfo)
     local specID = specInfo.specID
     for _, itemInfo in ipairs(itemInfoList) do
         local specTable = GetItemSpecInfo(itemInfo.itemLink) or {}
-        local containsLootSpec = false
+        local containsSpec = false
         for _, v in ipairs(specTable) do
             if v == specID then
-                containsLootSpec = true
+                containsSpec = true
                 break
             end
         end
-        if #specTable == 0 or containsLootSpec then
+        if #specTable == 0 or containsSpec then
             table.insert(specItemInfoList, itemInfo)
         end
     end
@@ -206,7 +206,7 @@ function util.getNumHeirlooms(itemEquipLoc)
     local count = 0
     for _, equipSlotID in ipairs(itemEquipLocToEquipSlot[itemEquipLoc]) do
         local itemLink = GetInventoryItemLink("player", equipSlotID)
-        if select(3, GetItemInfo(itemLink)) == 7 then
+        if itemLink and select(3, GetItemInfo(itemLink)) == 7 then
             count = count + 1
         end
     end
@@ -225,24 +225,6 @@ function util.getNumSpeedItems(itemEquipLoc)
         end
     end
     return count
-end
-
-function util.missingWeapon(itemEquipLoc)
-    if itemEquipLoc == "INVTYPE_WEAPON" then
-        return GetInventoryItemLink("player", 16) == nil or GetInventoryItemLink("player", 17) == nil and CanDualWield()
-    elseif itemEquipLoc == "INVTYPE_SHIELD" then
-        return GetInventoryItemLink("player", 17) == nil
-    elseif itemEquipLoc == "INVTYPE_2HWEAPON" then
-        return GetInventoryItemLink("player", 16) == nil or GetInventoryItemLink("player", 17) == nil and IsSpellKnown(46917)
-    elseif itemEquipLoc == "INVTYPE_WEAPONMAINHAND" then
-        return GetInventoryItemLink("player", 16) == nil
-    elseif itemEquipLoc == "INVTYPE_WEAPONOFFHAND" then
-        return GetInventoryItemLink("player", 17) == nil
-    elseif itemEquipLoc == "INVTYPE_HOLDABLE" then
-        return GetInventoryItemLink("player", 17) == nil
-    elseif itemEquipLoc == "INVTYPE_RANGED" then
-        return GetInventoryItemLink("player", 16) == nil
-    end
 end
 
 function util.weaponDiscrepancy(itemEquipLoc)
@@ -393,21 +375,6 @@ function util.missingItemSlotID(itemEquipLoc)
             return equipSlotID
         end
     end
-end
-
-function util.getValidEquipSlotItemLinks(itemEquipLoc)
-    local equipSlotIDs = itemEquipLocToEquipSlot[itemEquipLoc]
-    if itemEquipLoc == "INVTYPE_2HWEAPON" and IsSpellKnown(46917) then
-        table.insert(equipSlotIDs, 17)
-    end
-    if itemEquipLoc == "INVTYPE_WEAPON" and not CanDualWield() then
-        table.remove(equipSlotIDs)
-    end
-    local itemLinks = {}
-    for _, equipSlotID in ipairs(equipSlotIDs) do
-        itemLinks[equipSlotID] = GetInventoryItemLink("player", equipSlotID)
-    end
-    return itemLinks
 end
 
 function util.filterHeirloomItems(itemsToCompare)

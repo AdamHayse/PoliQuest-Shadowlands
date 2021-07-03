@@ -255,13 +255,13 @@ local function drawAutomationTab(container)
     RewardEquipLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
     container:AddChild(RewardEquipLogicDropdown)
 
-    local RewardEquipHeirloomCheckButton = createSwitchCheckBox(container, "Legendary", "QuestRewardEquipAutomation", "DoNotEquipOverHeirlooms")
+    local RewardEquipHeirloomCheckButton = createSwitchCheckBox(container, "Do Not Equip Over Heirlooms", "QuestRewardEquipAutomation", "DoNotEquipOverHeirlooms")
     container:AddChild(RewardEquipHeirloomCheckButton)
 
-    local RewardEquipSpeedCheckButton = createSwitchCheckBox(container, "Legendary", "QuestRewardEquipAutomation", "DoNotEquipOverSpeedItems")
+    local RewardEquipSpeedCheckButton = createSwitchCheckBox(container, "Do Not Equip Over Speed Items", "QuestRewardEquipAutomation", "DoNotEquipOverSpeedItems")
     container:AddChild(RewardEquipSpeedCheckButton)
 
-    local RewardEquipTrinketsCheckButton = createSwitchCheckBox(container, "Legendary", "QuestRewardEquipAutomation", "UseItemLevelLogicForTrinkets")
+    local RewardEquipTrinketsCheckButton = createSwitchCheckBox(container, "Use Item Level Logic For Trinkets", "QuestRewardEquipAutomation", "UseItemLevelLogicForTrinkets")
     container:AddChild(RewardEquipTrinketsCheckButton)
 
     local QuestRewardEquipAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Equip Automation", "QuestRewardEquipAutomation")
