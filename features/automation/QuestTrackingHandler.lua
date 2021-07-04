@@ -19,7 +19,11 @@ end
 feature.eventHandlers = {}
 
 function feature.eventHandlers.onQuestAccepted(questID)
-    local info = C_QuestLog.GetInfo(C_QuestLog.GetLogIndexForQuestID(questID))
+    local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+    if not logIndex then
+        return 
+    end
+    local info = C_QuestLog.GetInfo(logIndex)
     local isCampaign = not not info.campaignID
     local isDaily = not not (info.frequency == 1)
     local isWeekly = not not (info.frequency == 2)
