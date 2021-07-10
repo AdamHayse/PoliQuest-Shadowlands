@@ -47,6 +47,7 @@ addonTable.data.questIDBlacklist = {
     [62368] = true,  -- Rebuild Our Trust
     [62389] = true,  -- Rebuild Our Trust
     [62392] = true,  -- Rebuild Our Trust
+    [64541] = true,  -- The Cost of Death
 }
 
 addonTable.data.itemEquipLocToEquipSlot = {
