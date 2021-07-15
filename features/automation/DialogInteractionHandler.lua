@@ -11,12 +11,7 @@ end
 function feature.isDebug()
     return DEBUG_DIALOG_INTERACTION_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_DIALOG_INTERACTION_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local function searchDialogOptions(questDialog)
     local gossipOptions = C_GossipInfo.GetOptions()

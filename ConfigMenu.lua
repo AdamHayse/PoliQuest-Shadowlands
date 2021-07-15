@@ -2,7 +2,7 @@ local addonName, addonTable = ...
 
 local AceGUI = LibStub("AceGUI-3.0")
 
-local xpcall, ipairs, print = xpcall, ipairs, print
+local xpcall, ipairs, print = xpcall, ipairs, addonTable.util.printMessage
 local InCombatLockdown, GameFontHighlightLarge, GameFontHighlight = InCombatLockdown, GameFontHighlightLarge, GameFontHighlight
 
 local function errorhandler(err)
@@ -120,15 +120,15 @@ local function createFeatureCheckBox(container, label, featureName)
         updateCheckBoxEnabledStatus(container, false)                       -- does this function work like i want it to?
         if key == false then
             featureTable.setDebug(false)
-            print("|cFF5c8cc1PoliQuest:|r " .. label .. " disabled")
+            print(label .. " disabled")
             addonTable.util.updateFeatureConfiguration(featureName, featureTable, false)
         else
             if key == true then
                 featureTable.setDebug(false)
-                print("|cFF5c8cc1PoliQuest:|r " .. label .. " enabled")
+                print(label .. " enabled")
             else
                 featureTable.setDebug(true)
-                print("|cFF5c8cc1PoliQuest:|r " .. label .. " debug enabled")
+                print(label .. " debug enabled")
             end
             addonTable.util.updateFeatureConfiguration(featureName, featureTable, true)
         end
@@ -211,7 +211,7 @@ local function drawAutomationTab(container)
     QuestInteractionAutomationCheckButton:SetUserData("children", { QuestInterationAutomationExcludeTrivialCheckBox, QuestInterationAutomationModifierDropdown })
     container:AddChild(QuestInteractionAutomationCheckButton)
 
-    local IlvlThreshHoldEditBox = createSwitchEditBox(container, "Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", 150)
+    local IlvlThreshHoldEditBox = createSwitchEditBox(container, "Reward Item Level Threshold", "QuestRewardSelectionAutomation", "IlvlThreshold", 150)
     container:AddChild(IlvlThreshHoldEditBox)
 
     local RewardSelectionLogicDropdown = createSwitchDropdown(container, "Reward Selection Logic", "QuestRewardSelectionAutomation", "SelectionLogic", {"Simple Weights", "Pawn Weights", "Item Level", "Vendor Price"}, 150)
@@ -251,6 +251,9 @@ local function drawAutomationTab(container)
     local DialogInteractionAutomationCheckButton = createFeatureCheckBox(container, "Dialog Interaction Automation", "DialogInteractionAutomation")
     container:AddChild(DialogInteractionAutomationCheckButton)
 
+    local AverageIlvlThreshHoldEditBox = createSwitchEditBox(container, "Average Item Level Threshold", "QuestRewardEquipAutomation", "AverageIlvlThreshold", 150)
+    container:AddChild(AverageIlvlThreshHoldEditBox)
+
     local RewardEquipLogicDropdown = createSwitchDropdown(container, "Reward Equip Logic", "QuestRewardEquipAutomation", "EquipLogic", {"Simple Weights", "Pawn Weights", "Item Level"}, 150)
     RewardEquipLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
     container:AddChild(RewardEquipLogicDropdown)
@@ -265,7 +268,7 @@ local function drawAutomationTab(container)
     container:AddChild(RewardEquipTrinketsCheckButton)
 
     local QuestRewardEquipAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Equip Automation", "QuestRewardEquipAutomation")
-    QuestRewardEquipAutomationCheckButton:SetUserData("children", { RewardEquipLogicDropdown, RewardEquipHeirloomCheckButton, RewardEquipSpeedCheckButton, RewardEquipTrinketsCheckButton })
+    QuestRewardEquipAutomationCheckButton:SetUserData("children", { AverageIlvlThreshHoldEditBox, RewardEquipLogicDropdown, RewardEquipHeirloomCheckButton, RewardEquipSpeedCheckButton, RewardEquipTrinketsCheckButton })
     container:AddChild(QuestRewardEquipAutomationCheckButton)
 
     local QuestEmoteAutomationCheckButton = createFeatureCheckBox(container, "Quest Emote Automation", "QuestEmoteAutomation")
@@ -378,10 +381,10 @@ end
 local function selectGroup(container, group)
     if group == "tab1" then
         container:SetLayout("PoliQuestConfig_Layout")
-        drawGeneralTab(container)
+        drawAutomationTab(container)
     elseif group == "tab2" then
         container:SetLayout("PoliQuestConfig_Layout")
-        drawAutomationTab(container)
+        drawGeneralTab(container)
     elseif group == "tab3" then
         container:SetLayout("PoliQuestConfig_Layout")
         drawSpeedLevelingTab(container)
@@ -405,7 +408,7 @@ local function createMenu()
     configMenu:PauseLayout()
     
     configTab = AceGUI:Create("TabGroup")
-    configTab:SetTabs({{text="General", value="tab1"}, {text="Automation", value="tab2"}, {text="Speed Leveling", value="tab3"}, {text="Documentation", value="tab4"}})
+    configTab:SetTabs({{text="Automation", value="tab1"}, {text="General", value="tab2"}, {text="Speed Leveling", value="tab3"}, {text="Documentation", value="tab4"}})
     configTab:SetCallback("OnGroupSelected", function(self, event, group) self:ReleaseChildren() selectGroup(self, group) end)
     configMenu:AddChild(configTab)
     
@@ -428,7 +431,6 @@ local function createMenu()
     return configMenu
 end
 
-addonTable.util = addonTable.util or {}
 addonTable.util.createMenu = createMenu
 
 local menuLockdownFrame = CreateFrame("Frame")

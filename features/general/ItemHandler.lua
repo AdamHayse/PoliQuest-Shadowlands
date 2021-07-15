@@ -13,12 +13,7 @@ end
 function feature.isDebug()
     return DEBUG_ITEM_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_ITEM_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local currentItems, currentItemIndex
 -- quest item button
@@ -78,8 +73,8 @@ function pqButton.lock(self)
     end
     self.LockButton:Hide()
     self:SetMovable(false)
-    print("|cFF5c8cc1PoliQuest:|r Button will show when you have a Shadowlands quest item in your bags.")
-    print("|cFF5c8cc1/pq toggle:|r to show/move button again.")
+    print("Button will show when you have a Shadowlands quest item in your bags.")
+    print("Type \"/pq toggle\" to show/move button again.")
 end
 
 local function updateButton(refresh)

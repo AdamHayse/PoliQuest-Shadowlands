@@ -1,6 +1,6 @@
 local addonName, addonTable = ...
 
-local print, ipairs, ssplit, supper, slower, pairs, select, unpack, tinsert, tremove = print, ipairs, string.split, string.upper, string.lower, pairs, select, unpack, table.insert, table.remove
+local print, ipairs, ssplit, supper, slower, pairs, select, unpack, tinsert, tremove = addonTable.util.printMessage, ipairs, string.split, string.upper, string.lower, pairs, select, unpack, table.insert, table.remove
 local InCombatLockdown, CreateFrame, UIParent = InCombatLockdown, CreateFrame, UIParent
 
 local function ternaryExpression(condition, a, b)
@@ -62,7 +62,8 @@ local function PoliQuest_OnAddonLoaded(addonName)
         savedVars.QuestRewardEquipAutomation.enabled = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.enabled) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.enabled, true)
         PoliSavedVars.QuestRewardEquipAutomation.switches = PoliSavedVars.QuestRewardEquipAutomation.switches or {}
         savedVars.QuestRewardEquipAutomation.switches = {}
-        
+        savedVars.QuestRewardEquipAutomation.switches.AverageIlvlThreshold = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.AverageIlvlThreshold) == "string", PoliSavedVars.QuestRewardEquipAutomation.switches.AverageIlvlThreshold, "171")
+
         savedVars.QuestRewardEquipAutomation.switches.EquipLogic = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.EquipLogic) == "number" and pawnLoaded, PoliSavedVars.QuestRewardEquipAutomation.switches.EquipLogic, 1)
         savedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverHeirlooms = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverHeirlooms) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverHeirlooms, true)
         savedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverSpeedItems = ternaryExpression(type(PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverSpeedItems) == "boolean", PoliSavedVars.QuestRewardEquipAutomation.switches.DoNotEquipOverSpeedItems, false)
@@ -360,7 +361,7 @@ SlashCmdList["PoliQuest"] = function(msg)
             addonTable.QuestItemButton.Button:lock()
         end
     else
-        print("|cFF5c8cc1/pq:|r feature control")
-        print("|cFF5c8cc1/pq toggle:|r edit button position")
+        print("Type \"/pq\" to open the configuration menu")
+        print("Type \"/pq toggle\" to edit the quest item button position")
     end
 end

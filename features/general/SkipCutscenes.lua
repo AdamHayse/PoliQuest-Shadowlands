@@ -9,12 +9,7 @@ end
 function feature.isDebug()
     return DEBUG_SKIP_CUTSCENES
 end
-
-local function debugPrint(text)
-    if DEBUG_SKIP_CUTSCENES then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local featureEnabled
 CinematicFrame:HookScript("OnShow", function()

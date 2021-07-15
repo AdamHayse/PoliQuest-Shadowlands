@@ -9,12 +9,7 @@ end
 function feature.isDebug()
     return DEBUG_EMOTES_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_EMOTES_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local targetWhitelist = {
     ["Runestone of Rituals"] = {
@@ -66,7 +61,7 @@ function feature.eventHandlers.onChatMsgMonsterSay(chatMessage, name)
         for k, v in pairs(messageWhitelist) do
             if string.match(chatMessage, k) then
                 if UnitName("target") ~= "Playful Trickster" then
-                    print("|cFF5c8cc1PoliQuest:|r |cFFFF0000Make sure to target Playerful Trickster!|r")
+                    print("|cFFFF0000Make sure to target Playerful Trickster!|r")
                     pendingEmote = v
                     return
                 end

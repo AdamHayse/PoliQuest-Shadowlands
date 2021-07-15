@@ -1,6 +1,6 @@
 local _, addonTable = ...
 
-local GetTime, InCombatLockdown = GetTime, InCombatLockdown
+local GetTime, InCombatLockdown, UnitIsDeadOrGhost = GetTime, InCombatLockdown, UnitIsDeadOrGhost
 local util = addonTable.util
 local itemEquipLocToEquipSlot = addonTable.data.itemEquipLocToEquipSlot
 local levelingItems = addonTable.data.levelingItems
@@ -15,18 +15,7 @@ end
 function feature.isDebug()
     return DEBUG_REWARDS_HANDLER
 end
-
-local globalPrint = print
-
-local function debugPrint(text)
-    if DEBUG_REWARDS_HANDLER then
-        globalPrint("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
-
-local function print(text)
-    globalPrint("|cFF5c8cc1PoliQuest:|r " .. text)
-end
+local print, debugPrint, uniquePrint = util.getPrintFunction(feature)
 
 local function getBagAndSlot(itemName)
     for bagID = 0, NUM_BAG_SLOTS do
@@ -99,7 +88,7 @@ local function getUpgradeEquipSlotIDItemLevel(itemInfo)
     local maxItemLevelScore, maxItemLevelScoreEquipSlotID
     for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
         local itemLevelScore = util.compareItemsItemLevel(itemInfo, equippedItemInfo)
-        debugPrint("Item Level score for item in equip slot " .. equipSlotID .. ": " .. (itemLevelScore or "nil"))
+        debugPrint("Item Level score comparison against item in equip slot " .. equipSlotID .. ": " .. (itemLevelScore or "nil"))
         if not maxItemLevelScore or itemLevelScore > maxItemLevelScore then
             maxItemLevelScore = itemLevelScore
             maxItemLevelScoreEquipSlotID = equipSlotID
@@ -116,7 +105,7 @@ local function getUpgradeEquipSlotIDSimple(itemInfo, specInfo)
     local maxClass, maxScore, maxSimpleScoreEquipSlotID
     for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
         local class, score = util.compareItemsSimple(itemInfo, equippedItemInfo, specInfo)
-        debugPrint("Simple Weights class and score for item in equip slot " .. equipSlotID .. ": Class: " .. (class or "nil") .. " Score: " .. (score or "nil"))
+        debugPrint("Simple Weights class and score comparison against item in equip slot " .. equipSlotID .. ": Class: " .. (class or "nil") .. " Score: " .. (score or "nil"))
         if score > 0 and (not maxClass or class > maxClass or class == maxClass and score > maxScore) then
             maxClass = class
             maxScore = score
@@ -135,7 +124,7 @@ local function getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
     local maxPawnScore, maxPawnScoreEquipSlotID
     for equipSlotID, equippedItemInfo in pairs(itemInfo.itemsToCompare) do
         local pawnScore = util.compareItemsPawn(itemInfo, equippedItemInfo, scaleName)
-        debugPrint("Pawn Weights score for item in equip slot " .. equipSlotID .. ": " .. (pawnScore or "nil"))
+        debugPrint("Pawn Weights score comparison against item in equip slot " .. equipSlotID .. ": " .. (pawnScore or "nil"))
         if pawnScore == nil then
             debugPrint("Failed to calculate Pawn Weights score for quest reward")
             return nil
@@ -170,7 +159,7 @@ local function executeEquipLogic(itemInfo, specInfo)
     end
 end
 
-local DoNotEquipOverHeirlooms, DoNotEquipOverSpeedItems, UseItemLevelLogicForTrinkets
+local AverageIlvlThreshold, DoNotEquipOverHeirlooms, DoNotEquipOverSpeedItems, UseItemLevelLogicForTrinkets
 
 local function filterItemsToCompare(itemInfo)
     if DoNotEquipOverHeirlooms then
@@ -187,6 +176,11 @@ local function shouldAbortEquipAutomation(itemInfo, specInfo)
 
     if not util.allItemsAreEquippable(itemInfoContainer) then
         debugPrint("Quest reward equip automation aborted due to unequippable quest reward.")
+        return true
+    end
+
+    if GetAverageItemLevel() > AverageIlvlThreshold then
+        debugPrint("Quest reward equip automation aborted due to player average ilvl above ilvl threshold.")
         return true
     end
 
@@ -255,10 +249,12 @@ end
 
 feature.eventHandlers = {}
 
-local questLootReceivedTime, questLootItemLinks
+local questLootReceivedTime, questLootItemLinks, equipAttempts
 function feature.eventHandlers.onQuestLootReceived(_, link)
     questLootReceivedTime = GetTime()
+    debugPrint("onQuestLootReceived item link: " .. link)
     table.insert(questLootItemLinks, link)
+    equipAttempts = 0
 end
 
 function feature.eventHandlers.onPlayerEquipmentChanged(equipmentSlotIndex)
@@ -266,7 +262,7 @@ function feature.eventHandlers.onPlayerEquipmentChanged(equipmentSlotIndex)
         local itemLoc = ItemLocation:CreateFromEquipmentSlot(equipmentSlotIndex)
         if itemLoc:IsValid() then
             local equippedItemName = C_Item.GetItemName(ItemLocation:CreateFromEquipmentSlot(equipmentSlotIndex))
-            debugPrint(equippedItemName.." equipped") 
+            print(equippedItemName.." equipped") 
             for i, v in ipairs(questLootItemLinks) do
                 if equippedItemName == GetItemInfo(v) then
                     table.remove(questLootItemLinks, i)
@@ -280,7 +276,7 @@ function feature.eventHandlers.onPlayerEquipmentChanged(equipmentSlotIndex)
 end
 
 local function onUpdate()
-    if #questLootItemLinks > 0 and GetTime() - questLootReceivedTime > 1 and not InCombatLockdown() then
+    if #questLootItemLinks > 0 and GetTime() - questLootReceivedTime > 1 and not InCombatLockdown() and not UnitIsDeadOrGhost("player") then
         questLootReceivedTime = GetTime()
         debugPrint("Searching for quest reward...")
         local bagID, slotIndex = getBagAndSlot(GetItemInfo(questLootItemLinks[#questLootItemLinks]))
@@ -299,6 +295,14 @@ local function onUpdate()
                 if #questLootItemLinks == 0 then
                     questLootReceivedTime = nil
                 end
+            end
+        else
+            equipAttempts = equipAttempts + 1
+            debugPrint("Failed to find reward on attempt " .. equipAttempts)
+            if equipAttempts == 3 then
+                debugPrint("Aborting reward auto equip logic")
+                equipAttempts = 0
+                table.remove(questLootItemLinks)
             end
         end
     end
@@ -319,7 +323,9 @@ feature.initialize = initialize
 feature.terminate = terminate
 function feature.setSwitch(switchName, value)
     debugPrint(switchName .. " set to " .. tostring(value))
-    if switchName == "EquipLogic" then
+    if switchName == "AverageIlvlThreshold" then
+        AverageIlvlThreshold = tonumber(value)
+    elseif switchName == "EquipLogic" then
         EquipLogic = value == 1 and "Simple Weights" or (value == 2 and "Pawn Weights" or (value == 3 and "Item Level" or nil))
     elseif switchName == "DoNotEquipOverHeirlooms" then
         DoNotEquipOverHeirlooms = value

@@ -6,9 +6,9 @@
 ## OptionalDeps: Pawn
 
 embeds.xml
-ConfigMenu.lua
 
 questdata.lua
-util/QuestRewardUtil.lua
+util/util.xml
 features/features.xml
+ConfigMenu.lua
 PoliQuest.lua

@@ -9,12 +9,7 @@ end
 function feature.isDebug()
     return DEBUG_MAILBOX_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_MAILBOX_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local function onMailboxShow()
     for i=1, GetInboxNumItems() do

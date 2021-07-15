@@ -11,12 +11,7 @@ end
 function feature.isDebug()
     return DEBUG_QUEST_INTERACTION_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_QUEST_INTERACTION_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local Modifier
 local function automationSuppressed()
@@ -47,7 +42,7 @@ local function onGossipShow()
                 C_GossipInfo.SelectActiveQuest(i)
                 return
             else
-                print("|cFF5c8cc1PoliQuest:|r Active quest \"" .. v.title .. "\" not selected due to blacklisting.")
+                uniquePrint("Active quest \"" .. v.title .. "\" not selected due to blacklisting.")
             end
         end
     end
@@ -67,7 +62,7 @@ local function onGossipShow()
                 debugPrint("Quest excluded from automation.")
             end
         else
-            print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. v.title .. "\" not selected due to blacklisting.")
+            uniquePrint("Available quest \"" .. v.title .. "\" not selected due to blacklisting.")
         end
     end
 end
@@ -102,7 +97,7 @@ function feature.eventHandlers.onQuestGreeting()
                     debugPrint("QuestInteractionAutomation - Exiting onQuestGreeting")
                     return
                 else
-                    print("|cFF5c8cc1PoliQuest:|r Active quest \"" .. title .. "\" not selected due to blacklisting.")
+                    uniquePrint("Active quest \"" .. title .. "\" not selected due to blacklisting.")
                 end
             end
         end
@@ -125,7 +120,7 @@ function feature.eventHandlers.onQuestGreeting()
                     debugPrint("Quest excluded from automation.")
                 end
             else
-                print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
+                uniquePrint("Available quest \"" .. title .. "\" not selected due to blacklisting.")
             end
         end
     else
@@ -150,7 +145,7 @@ function feature.eventHandlers.onQuestDetail()
                 debugPrint("Quest excluded from automation.")
             end
         else
-            print("|cFF5c8cc1PoliQuest:|r Available quest \"" .. title .. "\" not selected due to blacklisting.")
+            uniquePrint("Available quest \"" .. title .. "\" not selected due to blacklisting.")
         end
     else
         debugPrint("Automation manually suppressed.")
@@ -175,7 +170,7 @@ function feature.eventHandlers.onQuestProgress()
                 QuestFrame:Hide()
             end
         else
-            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
+            uniquePrint("Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     else
         debugPrint("Automation manually suppressed.")
@@ -197,7 +192,7 @@ function feature.eventHandlers.onQuestComplete()
                 GetQuestReward(1)
             end
         else
-            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
+            uniquePrint("Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     else
         debugPrint("Automation manually suppressed.")
@@ -217,7 +212,7 @@ function feature.eventHandlers.onQuestLogUpdate()
                     debugPrint("questID: " .. questID)
                     AutoQuestPopUpTracker_OnMouseUp(CAMPAIGN_QUEST_TRACKER_MODULE:GetBlock(questID), "LeftButton", true)
                 else
-                    print("|cFF5c8cc1PoliQuest:|r Quest \"" .. C_QuestLog.GetTitleForQuestID(questID)  .. "\" not automated due to blacklisting.")
+                    uniquePrint("Quest \"" .. C_QuestLog.GetTitleForQuestID(questID)  .. "\" not automated due to blacklisting.")
                 end
             end
             debugPrint("QuestInteractionAutomation - Exiting onQuestLogUpdate")

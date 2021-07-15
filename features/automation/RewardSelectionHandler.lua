@@ -13,12 +13,7 @@ end
 function feature.isDebug()
     return DEBUG_QUEST_REWARD_SELECTION_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_QUEST_REWARD_SELECTION_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = util.getPrintFunction(feature)
 
 local Modifier
 local function automationSuppressed()
@@ -148,12 +143,12 @@ local IlvlThreshold
 local function shouldAbortRewardAutomation(questItemInfoList, lootSpecInfo)
     debugPrint("SelectionLogic = " .. (SelectionLogic or "nil"))
     if not util.allItemsAreEquippable(questItemInfoList) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items that are not equippable.")
+        print("Quest reward selection automation aborted due to items that are not equippable.")
         return true
     end
     local questItemIlvl = util.getHighestItemLevel(questItemInfoList)
     if questItemIlvl > IlvlThreshold then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to items above ilvl threshold.")
+        print("Quest reward selection automation aborted due to items above ilvl threshold.")
         return true
     end
     if SelectionLogic ~= "Vendor Price" then
@@ -161,12 +156,12 @@ local function shouldAbortRewardAutomation(questItemInfoList, lootSpecInfo)
 
         if #specQuestItemInfoList == 0 then
             if lootSpecInfo.specIndex == 5 then
-                print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no class specialization.")
+                print("Quest reward selection automation aborted due to no class specialization.")
                 if UnitLevel("player") < 10 then
-                    print("|cFF5c8cc1PoliQuest:|r Set loot specialization to remove this check while lower than level 10.")
+                    print("Set loot specialization to remove this check while lower than level 10.")
                 end
             else
-                print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to no items for your current loot specialization.")
+                print("Quest reward selection automation aborted due to no items for your current loot specialization.")
             end
             return true
         elseif #specQuestItemInfoList == 1 then
@@ -177,29 +172,29 @@ local function shouldAbortRewardAutomation(questItemInfoList, lootSpecInfo)
         -- WRONG ARMOR SPEC CHECK
         -- check if it's a boe
         if util.missingItem(specQuestItemInfoList) and questItemIlvl > 50 then
-            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to item missing from equip slot.")
+            print("Quest reward selection automation aborted due to item missing from equip slot.")
             return true
         end
         if util.socketExists(specQuestItemInfoList) then
-            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to reward with socket.")
+            print("Quest reward selection automation aborted due to reward with socket.")
             return true
         end
         if util.trinketExists(specQuestItemInfoList) then
-            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to trinket reward.")
+            print("Quest reward selection automation aborted due to trinket reward.")
             return true
         end
         if util.weaponExists(specQuestItemInfoList) then
-            print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to weapon reward.")
+            print("Quest reward selection automation aborted due to weapon reward.")
             return true
         end
     end
 
     if util.shirtExists(questItemInfoList) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to shirt reward.")
+        print("Quest reward selection automation aborted due to shirt reward.")
         return true
     end
     if util.tabardExists(questItemInfoList) then
-        print("|cFF5c8cc1PoliQuest:|r Quest reward automation aborted due to tabard reward.")
+        print("Quest reward selection automation aborted due to tabard reward.")
         return true
     end
     return false
@@ -271,7 +266,7 @@ function feature.eventHandlers.onQuestComplete()
                 end
             end
         else
-            print("|cFF5c8cc1PoliQuest:|r Quest \"" .. title .. "\" not automated due to blacklisting.")
+            uniquePrint("Quest \"" .. title .. "\" not automated due to blacklisting.")
         end
     else
         debugPrint("Automation manually suppressed.")

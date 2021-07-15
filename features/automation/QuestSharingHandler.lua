@@ -11,12 +11,7 @@ end
 function feature.isDebug()
     return DEBUG_QUEST_SHARING_HANDLER
 end
-
-local function debugPrint(text)
-    if DEBUG_QUEST_SHARING_HANDLER then
-        print("|cFF5c8cc1PoliQuest[DEBUG]:|r " .. text)
-    end
-end
+local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local pendingShare, awaitingResponses, autoShareInProgress, msgCheckBuffer, numPartyMembers, shareTime
 local sharedWithCount, responseCount = 0, 0
