@@ -204,7 +204,7 @@ local function drawAutomationTab(container)
     local QuestInterationAutomationExcludeTrivialCheckBox = createSwitchCheckBox(container, "Exclude Low Level Quests", "QuestInteractionAutomation", "ExcludeTrivial")
     container:AddChild(QuestInterationAutomationExcludeTrivialCheckBox)
 
-    local QuestInterationAutomationModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestInteractionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
+    local QuestInterationAutomationModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestInteractionAutomation", "Modifier", {"None", "Alt", "Ctrl", "Shift"}, 150)
     container:AddChild(QuestInterationAutomationModifierDropdown)
 
     local QuestInteractionAutomationCheckButton = createFeatureCheckBox(container, "Quest Interaction Automation", "QuestInteractionAutomation")
@@ -218,7 +218,7 @@ local function drawAutomationTab(container)
     RewardSelectionLogicDropdown:SetItemDisabled(2, not addonTable.properties.PawnLoaded)
     container:AddChild(RewardSelectionLogicDropdown)
 
-    local RewardSelectionLogicModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestRewardSelectionAutomation", "Modifier", {"Alt", "Ctrl", "Shift"}, 150)
+    local RewardSelectionLogicModifierDropdown = createSwitchDropdown(container, "Suspend Automation Modifier", "QuestRewardSelectionAutomation", "Modifier", {"None", "Alt", "Ctrl", "Shift"}, 150)
     container:AddChild(RewardSelectionLogicModifierDropdown)
 
     local QuestRewardSelectionAutomationCheckButton = createFeatureCheckBox(container, "Quest Reward Selection Automation", "QuestRewardSelectionAutomation")

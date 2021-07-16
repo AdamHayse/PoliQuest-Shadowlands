@@ -15,14 +15,16 @@ local print, debugPrint, uniquePrint = addonTable.util.getPrintFunction(feature)
 
 local Modifier
 local function automationSuppressed()
-    if Modifier == "Alt" then
+    if Modifier == "None" then
+        return false
+    elseif Modifier == "Alt" then
         return IsAltKeyDown()
     elseif Modifier == "Ctrl" then
         return IsControlKeyDown()
     elseif Modifier == "Shift" then
         return IsShiftKeyDown()
     else
-        debugPrint("Modifier switch not set.")
+        debugPrint("Modifier configuration is nil")
         return false
     end
 end
@@ -253,7 +255,7 @@ feature.terminate = terminate
 function feature.setSwitch(switchName, value)
     debugPrint(switchName .. " set to " .. tostring(value))
     if switchName == "Modifier" then
-        Modifier = value == 1 and "Alt" or (value == 2 and "Ctrl" or (value == 3 and "Shift" or nil))
+        Modifier = value == 1 and "None" or (value == 2 and "Alt" or (value == 3 and "Ctrl" or (value == 4 and "Shift" or nil)))
     elseif switchName == "ExcludeTrivial" then
         ExcludeTrivial = value
     end
