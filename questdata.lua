@@ -67,11 +67,11 @@ addonTable.data.itemEquipLocToEquipSlot = {
     ["INVTYPE_CLOAK"] = {15},
     ["INVTYPE_WEAPON"] = { 16, 17 },
     ["INVTYPE_SHIELD"] = {17},
-    ["INVTYPE_2HWEAPON"] = {16},
+    ["INVTYPE_2HWEAPON"] = {16}, -- special
     ["INVTYPE_WEAPONMAINHAND"] = {16},
     ["INVTYPE_WEAPONOFFHAND"] = {17},
-    ["INVTYPE_HOLDABLE"] = {17}, --[[
-    ["INVTYPE_RANGED"] = 18,
+    ["INVTYPE_HOLDABLE"] = {17},
+    ["INVTYPE_RANGED"] = {16}, --[[
     ["INVTYPE_THROWN"] = 18,
     ["INVTYPE_RANGEDRIGHT"] = 18,
     ["INVTYPE_RELIC"] = 18,
@@ -80,9 +80,9 @@ addonTable.data.itemEquipLocToEquipSlot = {
     ["INVTYPE_QUIVER"] = { 20, 21, 22, 23 }  ]]
 }
 
-addonTable.data.levelingItems = {
-    "Hunger of the Pack",
-    "Boots of the Gilded Path"
+addonTable.data.speedItems = {
+    [136975] = true, -- Hunger of the Pack
+    [165541] = true -- Boots of the Gilded Path
 }
 
 addonTable.data.bonusToIlvl = {

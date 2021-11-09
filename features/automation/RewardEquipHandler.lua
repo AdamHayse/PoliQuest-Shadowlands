@@ -123,6 +123,111 @@ local function isUpgrade(bagID, slotIndex)
     return false
 end
 
+
+local function getUpgradeEquipSlotIDPawnWeapon(itemInfo, scaleName)
+
+end
+
+local function getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
+    local scaleName = util.fetchScaleName(specInfo)
+    -- if item is a weapon, return special weapon function
+    if util.weaponExists({itemInfo}) then
+        return getUpgradeEquipSlotIDPawnWeapon(itemInfo, scaleName)
+    else
+        local itemsToCompare = {}
+        util.addItemsToCompare(itemInfo, util.getEquipSlotItemLinks(itemInfo.itemEquipLoc), specInfo)
+        local maxPawnScore
+        if #itemInfo.itemsToCompare ~= #itemEquipLocToEquipSlot[itemInfo.itemEquipLoc] then
+            maxPawnScore = util.getPawnScore(itemInfo, scaleName)
+        else
+            for _, equippedItemInfo in ipairs(itemInfo.itemsToCompare) do
+                local pawnScore = util.compareItemsPawn(itemInfo, equippedItemInfo, scaleName)
+                if pawnScore == nil then
+                    maxPawnScore = nil
+                    break
+                elseif not maxPawnScore or pawnScore > maxPawnScore then
+                    maxPawnScore = pawnScore
+                end
+            end
+        end
+    end
+end
+
+local DoNotEquipOverHeirlooms, DoNotEquipOverSpeedItems
+
+local function shouldAbortEquipAutomation(itemInfo, specInfo)
+    local itemInfoContainer = { itemInfo }
+    local itemEquipLoc = itemInfo.itemEquipLoc
+
+    if not util.allItemsAreEquippable(itemInfoContainer) then
+        return true
+    end
+
+    if util.boeExists(itemInfoContainer) then
+        print("|cFF5c8cc1PoliQuest:|r Quest reward equip automation aborted due to BOE reward.")
+        return true
+    end
+    
+    if #util.filterSpecItems(itemInfoContainer, specInfo) == 0 then
+        print("|cFF5c8cc1PoliQuest:|r Quest reward equip automation aborted due to reward item not suitable for current specialization.")
+        return true
+    end
+
+    if #itemEquipLocToEquipSlot[itemEquipLoc] == util.getNumHeirlooms(itemEquipLoc) and DoNotEquipOverHeirlooms then
+        debugPrint("Quest reward equip automation aborted due to heirloom item in equip slot.")
+        return true
+    end
+
+    if #itemEquipLocToEquipSlot[itemEquipLoc] == util.getNumSpeedItems(itemEquipLoc) and DoNotEquipOverSpeedItems then
+        debugPrint("Quest reward equip automation aborted due to speed leveling item in equip slot.")
+        return true
+    end
+
+    if util.trinketExists(itemInfoContainer) and not UseItemLevelLogicForTrinkets then
+        print("|cFF5c8cc1PoliQuest:|r Quest reward equip automation aborted due to trinket reward. Enable \"Use Item Level Logic for Trinkets\" to automate trinkets in the future.")
+        return true
+    end
+
+    if util.weaponExists(itemInfoContainer) then
+        if util.missingWeapon(itemEquipLoc) then
+            print("Quest reward equip automation aborted due to item missing from equip slot.")
+            return true
+        end
+        if util.weaponDiscrepancy(itemEquipLoc) then
+            print("Quest reward equip automation aborted due to discrepancy between reward item type and equipped item type.")
+            return true
+        end
+    end
+
+    return false
+end
+
+local EquipLogic
+local function isUpgrade(itemLink)
+    local specInfo = util.getCurrentSpecInfo()
+    local itemInfo = util.getItemInfo(itemLink, specInfo)
+    if not shouldAbortEquipAutomation(itemInfo, specInfo) then
+        return false
+    else
+        local pawnSuccess
+        if EquipLogic == "Pawn" then
+            local isUpgrade, slotID = getUpgradeEquipSlotIDPawn(itemInfo, specInfo)
+            if isUpgrade ~= nil then
+                return isUpgrade, slotID
+            end
+        end
+        local itemIsTrinket, itemIsWeapon = util.trinketExists({itemInfo}), util.weaponExists({itemInfo})
+        if not itemIsTrinket and not itemIsWeapon and (EquipLogic == "Simple" or EquipLogic == "Pawn") then
+            return getUpgradeEquipSlotIDSimple(itemInfo, specInfo)
+        end
+        if EquipLogic == "ItemLevel" or itemIsTrinket or itemIsWeapon then
+            return getUpgradeEquipSlotIDItemLevel
+        end
+    end
+end
+
+
+
 feature.eventHandlers = {}
 
 local questLootReceivedTime, questLootItemLinks
